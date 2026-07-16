@@ -16,30 +16,24 @@ END
 DO
 \$do\$
 BEGIN
-    IF NOT EXISTS (SELECT FROM pg_database WHERE datname = '${WEATHER_DB_NAME}') THEN
-        EXECUTE format('CREATE DATABASE %I OWNER %I', '${WEATHER_DB_NAME}', '${WEATHER_DB_USERNAME}');
-    END IF;
-END
-\$do\$;
-
-DO
-\$do\$
-BEGIN
     IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '${TIME_COORDINATOR_DB_USERNAME}') THEN
         EXECUTE format('CREATE USER %I WITH PASSWORD %L', '${TIME_COORDINATOR_DB_USERNAME}', '${TIME_COORDINATOR_DB_PASSWORD}');
     END IF;
 END
 \$do\$;
-
-DO
-\$do\$
-BEGIN
-    IF NOT EXISTS (SELECT FROM pg_database WHERE datname = '${TIME_COORDINATOR_DB_NAME}') THEN
-        EXECUTE format('CREATE DATABASE %I OWNER %I', '${TIME_COORDINATOR_DB_NAME}', '${TIME_COORDINATOR_DB_USERNAME}');
-    END IF;
-END
-\$do\$;
 EOSQL
+
+if ! psql -tA --username "${POSTGRES_SUPERUSER}" --dbname "${POSTGRES_BOOTSTRAP_DB}" \
+    -c "SELECT 1 FROM pg_database WHERE datname = '${WEATHER_DB_NAME}'" | grep -q 1; then
+    psql -v ON_ERROR_STOP=1 --username "${POSTGRES_SUPERUSER}" --dbname "${POSTGRES_BOOTSTRAP_DB}" \
+        -c "CREATE DATABASE \"${WEATHER_DB_NAME}\" OWNER \"${WEATHER_DB_USERNAME}\""
+fi
+
+if ! psql -tA --username "${POSTGRES_SUPERUSER}" --dbname "${POSTGRES_BOOTSTRAP_DB}" \
+    -c "SELECT 1 FROM pg_database WHERE datname = '${TIME_COORDINATOR_DB_NAME}'" | grep -q 1; then
+    psql -v ON_ERROR_STOP=1 --username "${POSTGRES_SUPERUSER}" --dbname "${POSTGRES_BOOTSTRAP_DB}" \
+        -c "CREATE DATABASE \"${TIME_COORDINATOR_DB_NAME}\" OWNER \"${TIME_COORDINATOR_DB_USERNAME}\""
+fi
 
 psql -v ON_ERROR_STOP=1 --username "${POSTGRES_SUPERUSER}" --dbname "${WEATHER_DB_NAME}" <<-EOSQL
 REVOKE ALL ON DATABASE "${WEATHER_DB_NAME}" FROM PUBLIC;

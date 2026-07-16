@@ -12,6 +12,8 @@ Ten katalog zawiera docelowy runtime produkcyjny bez reverse proxy:
 - `.env.example` - lista wymaganych zmiennych
 - `postgres/init/01-init-databases.sh` - inicjalizacja dwoch baz danych i uzytkownikow na podstawie `.env`
 - `secrets/google-calendar/` - lokalne mounty dla credentials i tokenow Google
+- `FIRST_RUN_CHECKLIST.md` - checklista pierwszego uruchomienia
+- `POST_DEPLOY_VALIDATION.md` - checklista walidacji po wdrozeniu
 
 ## Przygotowanie
 
