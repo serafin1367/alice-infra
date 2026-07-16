@@ -1,0 +1,3 @@
+.env
+secrets/google-calendar/credentials.json
+secrets/google-calendar/tokens/
