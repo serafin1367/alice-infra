@@ -47,7 +47,8 @@ docker compose --env-file .env up -d --build
 - `postgres/init/01-init-databases.sh` wykonuje sie tylko przy pierwszym uruchomieniu pustego wolumenu `postgres_data`.
 - Zmiana hasel po inicjalizacji bazy wymaga recznej operacji SQL albo odtworzenia wolumenu.
 - Port `15672` od RabbitMQ management nie powinien byc wystawiony publicznie bez firewalla.
-- Port `8888` musi byc stale mapowany dla OAuth Google u `time-coordinator-service`.
+- Web OAuth Google korzysta z callbacku HTTP aplikacji:
+  - `GOOGLE_CALENDAR_OAUTH_REDIRECT_URI`
 - Brak reverse proxy oznacza brak TLS termination na poziomie stacka. Jesli uslugi maja byc publiczne, trzeba to rozwiazac na poziomie hosta lub sieci.
 
 ## Minimalna weryfikacja po starcie
