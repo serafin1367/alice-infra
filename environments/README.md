@@ -10,4 +10,5 @@ Suggested direction:
 Inside each environment, group files by host or logical stack when the topology becomes clear.
 
 Current setup:
+- `develop/` - wspolny stack Docker Compose dla lokalnego developmentu z `postgres`, `rabbitmq`, `weather-service` i `time-coordinator-service`
 - `production/` - wspolny stack Docker Compose dla `postgres`, `rabbitmq`, `weather-service` i `time-coordinator-service`

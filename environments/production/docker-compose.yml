@@ -17,6 +17,9 @@ services:
       TIME_COORDINATOR_DB_NAME: ${TIME_COORDINATOR_DB_NAME:-time_coordinator}
       TIME_COORDINATOR_DB_USERNAME: ${TIME_COORDINATOR_DB_USERNAME}
       TIME_COORDINATOR_DB_PASSWORD: ${TIME_COORDINATOR_DB_PASSWORD}
+      MAIL_DB_NAME: ${MAIL_DB_NAME:-mail}
+      MAIL_DB_USERNAME: ${MAIL_DB_USERNAME}
+      MAIL_DB_PASSWORD: ${MAIL_DB_PASSWORD}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -101,6 +104,38 @@ services:
       - "${TIME_COORDINATOR_PUBLIC_PORT:-8082}:8082"
     volumes:
       - ./secrets/google-calendar:/app/secrets
+
+  mail-service:
+    build:
+      context: ../../../microservices/mail
+    container_name: ${MAIL_CONTAINER_NAME:-alice-mail-service}
+    hostname: ${MAIL_HOSTNAME:-mail-service}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8083
+      MAIL_DB_URL: jdbc:postgresql://postgres:5432/${MAIL_DB_NAME:-mail}
+      MAIL_DB_USERNAME: ${MAIL_DB_USERNAME}
+      MAIL_DB_PASSWORD: ${MAIL_DB_PASSWORD}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      RABBITMQ_VHOST: ${RABBITMQ_VHOST:-alice}
+      MAIL_SMTP_HOST: ${MAIL_SMTP_HOST}
+      MAIL_SMTP_PORT: ${MAIL_SMTP_PORT:-587}
+      MAIL_SMTP_USERNAME: ${MAIL_SMTP_USERNAME:-}
+      MAIL_SMTP_PASSWORD: ${MAIL_SMTP_PASSWORD:-}
+      MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-true}
+      MAIL_SMTP_STARTTLS: ${MAIL_SMTP_STARTTLS:-true}
+      MAIL_DEFAULT_FROM: ${MAIL_DEFAULT_FROM}
+      MAIL_NOTIFICATIONS_QUEUE: ${MAIL_NOTIFICATIONS_QUEUE:-mail.notifications.queue}
+    ports:
+      - "${MAIL_PUBLIC_PORT:-8083}:8083"
 
 volumes:
   postgres_data:
