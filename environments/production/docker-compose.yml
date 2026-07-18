@@ -135,9 +135,12 @@ services:
       MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-true}
       MAIL_SMTP_STARTTLS: ${MAIL_SMTP_STARTTLS:-true}
       MAIL_DEFAULT_FROM: ${MAIL_DEFAULT_FROM}
+      MAIL_ATTACHMENTS_BASE_DIR: /app/storage/attachments
       MAIL_NOTIFICATIONS_QUEUE: ${MAIL_NOTIFICATIONS_QUEUE:-mail.notifications.queue}
     ports:
       - "${MAIL_PUBLIC_PORT:-8083}:8083"
+    volumes:
+      - ${MAIL_ATTACHMENTS_HOST_DIR:-./data/mail-attachments}:/app/storage/attachments
 
 volumes:
   postgres_data:
