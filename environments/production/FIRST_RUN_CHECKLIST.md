@@ -34,6 +34,7 @@ Na hoście Linux:
 
 ```bash
 chmod +x postgres/init/01-init-databases.sh
+chmod +x postgres/init/02-init-mail-database.sh
 ```
 
 ## 4. Start stacka
@@ -74,8 +75,10 @@ Sprawdz:
 Sprawdz, czy istnieja:
 - baza `weather`
 - baza `time_coordinator`
+- baza `mail`
 - uzytkownik `weather`
 - uzytkownik `time_coordinator`
+- uzytkownik `mail`
 
 Przyklad:
 
@@ -126,6 +129,8 @@ Jesli sa endpointy health, sprawdz je w pierwszej kolejnosci.
 
 - `postgres init script did not run`
   - wolumen `postgres_data` juz istnial
+- `mail database missing on existing postgres volume`
+  - wykonaj recznie `postgres/init/02-init-mail-database.sh`
 - `database does not exist`
   - bledne zmienne w `.env`
 - `port already allocated`

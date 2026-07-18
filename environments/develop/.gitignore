@@ -1,0 +1,4 @@
+.env
+secrets/google-calendar/credentials.json
+secrets/google-calendar/tokens/*
+!secrets/google-calendar/tokens/.gitkeep
