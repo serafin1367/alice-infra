@@ -157,24 +157,12 @@ services:
     ports:
       - "${MAIL_PUBLIC_PORT:-18083}:8083"
 
-  ollama:
-    image: ollama/ollama:latest
-    container_name: ${OLLAMA_CONTAINER_NAME:-alice-dev-ollama}
-    hostname: ${OLLAMA_HOSTNAME:-ollama}
-    restart: unless-stopped
-    ports:
-      - "${OLLAMA_PUBLIC_PORT:-11434}:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-
   llm-service:
     build:
       context: ../../../microservices/llm
     container_name: ${LLM_CONTAINER_NAME:-alice-dev-llm-service}
     hostname: ${LLM_HOSTNAME:-llm-service}
     restart: unless-stopped
-    depends_on:
-      - ollama
     environment:
       SERVER_PORT: 8084
       WEATHER_BASE_URL: http://weather-service:8081
@@ -190,4 +178,3 @@ services:
 volumes:
   postgres_data:
   rabbitmq_data:
-  ollama_data:
