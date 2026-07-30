@@ -20,6 +20,9 @@ services:
       MAIL_DB_NAME: ${MAIL_DB_NAME:-mail}
       MAIL_DB_USERNAME: ${MAIL_DB_USERNAME}
       MAIL_DB_PASSWORD: ${MAIL_DB_PASSWORD}
+      LLM_DB_NAME: ${LLM_DB_NAME:-llm}
+      LLM_DB_USERNAME: ${LLM_DB_USERNAME:-llm}
+      LLM_DB_PASSWORD: ${LLM_DB_PASSWORD:-llm123}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -142,6 +145,37 @@ services:
     volumes:
       - ${MAIL_ATTACHMENTS_HOST_DIR:-./data/mail-attachments}:/app/storage/attachments
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ${OLLAMA_CONTAINER_NAME:-alice-ollama}
+    hostname: ${OLLAMA_HOSTNAME:-ollama}
+    restart: unless-stopped
+    ports:
+      - "${OLLAMA_PUBLIC_PORT:-11434}:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+  llm-service:
+    build:
+      context: ../../../microservices/llm
+    container_name: ${LLM_CONTAINER_NAME:-alice-llm-service}
+    hostname: ${LLM_HOSTNAME:-llm-service}
+    restart: unless-stopped
+    depends_on:
+      - ollama
+    environment:
+      SERVER_PORT: 8084
+      WEATHER_BASE_URL: ${WEATHER_BASE_URL:-http://weather-service:8081}
+      TELEGRAM_ENABLED: ${TELEGRAM_ENABLED:-false}
+      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN:-}"
+      TELEGRAM_ALLOWED_CHAT_ID: "${TELEGRAM_ALLOWED_CHAT_ID:-}"
+      LLM_DB_URL: jdbc:postgresql://postgres:5432/${LLM_DB_NAME:-llm}
+      LLM_DB_USERNAME: ${LLM_DB_USERNAME:-llm}
+      LLM_DB_PASSWORD: ${LLM_DB_PASSWORD:-llm123}
+    ports:
+      - "${LLM_PUBLIC_PORT:-8084}:8084"
+
 volumes:
   postgres_data:
   rabbitmq_data:
+  ollama_data:

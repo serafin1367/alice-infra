@@ -21,6 +21,7 @@ BEGIN
     END IF;
 END
 \$do\$;
+
 EOSQL
 
 if ! psql -tA --username "${POSTGRES_SUPERUSER}" --dbname "${POSTGRES_BOOTSTRAP_DB}" \
