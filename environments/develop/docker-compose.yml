@@ -168,7 +168,6 @@ services:
       WEATHER_BASE_URL: http://weather-service:8081
       TELEGRAM_ENABLED: ${TELEGRAM_ENABLED:-false}
       TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN:-}"
-      TELEGRAM_ALLOWED_CHAT_ID: "${TELEGRAM_ALLOWED_CHAT_ID:-}"
       LLM_DB_URL: jdbc:postgresql://postgres:5432/${LLM_DB_NAME:-llm}
       LLM_DB_USERNAME: ${LLM_DB_USERNAME:-llm}
       LLM_DB_PASSWORD: ${LLM_DB_PASSWORD:-dev-llm}
