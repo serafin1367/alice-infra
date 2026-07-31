@@ -8,7 +8,6 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE_DIR="$(cd -- "$SCRIPT_DIR/../../.." && pwd)"
 COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
-ENV_FILE="$SCRIPT_DIR/.env"
 BRANCH="${DEPLOY_BRANCH:-main}"
 
 REPOSITORIES=(
@@ -50,8 +49,8 @@ update_repository() {
 require_command git
 require_command docker
 
-[[ -f "$ENV_FILE" ]] || {
-  echo "Brak pliku produkcyjnego: $ENV_FILE" >&2
+[[ -f "$SCRIPT_DIR/.env" ]] || {
+  echo "Brak pliku produkcyjnego: $SCRIPT_DIR/.env" >&2
   exit 1
 }
 
@@ -60,13 +59,13 @@ for repository in "${REPOSITORIES[@]}"; do
 done
 
 echo "Walidacja konfiguracji Docker Compose"
-docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" config -q
+docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" config -q
 
 echo "Zatrzymywanie stosu produkcyjnego (wolumeny danych zostaja zachowane)"
-docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" down --remove-orphans
+docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" down --remove-orphans
 
 echo "Budowanie i uruchamianie stosu produkcyjnego"
-docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --build --remove-orphans
+docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" up -d --build --remove-orphans
 
 echo "Aktualny stan kontenerow"
-docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" ps
+docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" ps
