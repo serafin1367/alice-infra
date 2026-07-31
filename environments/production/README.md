@@ -49,6 +49,20 @@ docker compose --env-file .env up -d --build
 docker compose --env-file .env up -d --build
 ```
 
+Pelne wdrozenie z pobraniem aktualnego kodu wszystkich projektow wykonuje skrypt
+`deploy-production.sh`. Zaklada on uklad katalogow, w ktorym `desktop`, `infra`
+i `microservices/*` sa katalogami jednego workspace. Skrypt wymaga czystych
+repozytoriow i nie usuwa wolumenow z danymi:
+
+```bash
+cd infra/environments/production
+chmod +x deploy-production.sh
+./deploy-production.sh
+```
+
+Domyslnie pobierana jest galaz `main`; mozna wskazac inna przez
+`DEPLOY_BRANCH=nazwa-galezi ./deploy-production.sh`.
+
 ## Operacyjne uwagi
 
 - `postgres/init/01-init-databases.sh` wykonuje sie tylko przy pierwszym uruchomieniu pustego wolumenu `postgres_data`.
