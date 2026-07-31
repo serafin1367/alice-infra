@@ -36,8 +36,8 @@ update_repository() {
     exit 1
   }
 
-  if [[ -n "$(git -C "$repository" status --porcelain)" ]]; then
-    echo "Repozytorium $name ma niezapisane zmiany. Przerywam wdrozenie." >&2
+  if [[ -n "$(git -C "$repository" status --porcelain --untracked-files=no)" ]]; then
+    echo "Repozytorium $name ma zmienione pliki sledzone przez Git. Przerywam wdrozenie." >&2
     exit 1
   fi
 

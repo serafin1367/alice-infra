@@ -52,7 +52,8 @@ docker compose --env-file .env up -d --build
 Pelne wdrozenie z pobraniem aktualnego kodu wszystkich projektow wykonuje skrypt
 `deploy-production.sh`. Zaklada on uklad katalogow, w ktorym `desktop`, `infra`
 i `microservices/*` sa katalogami jednego workspace. Skrypt wymaga czystych
-repozytoriow i nie usuwa wolumenow z danymi:
+plikow sledzonych przez Git; ignoruje typowe niezatwierdzone artefakty runtime,
+takie jak `.env`, dane i sekrety. Nie usuwa wolumenow z danymi:
 
 ```bash
 cd infra/environments/production
