@@ -11,12 +11,15 @@ COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
 BRANCH="${DEPLOY_BRANCH:-main}"
 
 REPOSITORIES=(
-  "$WORKSPACE_DIR/desktop"
   "$WORKSPACE_DIR/infra"
   "$WORKSPACE_DIR/microservices/llm"
   "$WORKSPACE_DIR/microservices/mail"
   "$WORKSPACE_DIR/microservices/time_coordinator"
   "$WORKSPACE_DIR/microservices/weather"
+)
+
+OPTIONAL_REPOSITORIES=(
+  "$WORKSPACE_DIR/desktop"
 )
 
 require_command() {
@@ -56,6 +59,14 @@ require_command docker
 
 for repository in "${REPOSITORIES[@]}"; do
   update_repository "$repository"
+done
+
+for repository in "${OPTIONAL_REPOSITORIES[@]}"; do
+  if [[ -d "$repository/.git" ]]; then
+    update_repository "$repository"
+  else
+    echo "Pominieto opcjonalne repozytorium: $repository"
+  fi
 done
 
 echo "Walidacja konfiguracji Docker Compose"

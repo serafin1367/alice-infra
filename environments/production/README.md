@@ -55,6 +55,9 @@ i `microservices/*` sa katalogami jednego workspace. Skrypt wymaga czystych
 plikow sledzonych przez Git; ignoruje typowe niezatwierdzone artefakty runtime,
 takie jak `.env`, dane i sekrety. Nie usuwa wolumenow z danymi:
 
+Repozytorium `desktop` jest aktualizowane tylko wtedy, gdy istnieje na serwerze;
+nie jest wymagane do wdrozenia mikroserwisow.
+
 ```bash
 cd infra/environments/production
 chmod +x deploy-production.sh
