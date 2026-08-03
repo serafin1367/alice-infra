@@ -154,6 +154,7 @@ services:
       MAIL_SMTP_STARTTLS: ${MAIL_SMTP_STARTTLS:-false}
       MAIL_DEFAULT_FROM: ${MAIL_DEFAULT_FROM:-alice@localhost}
       MAIL_NOTIFICATIONS_QUEUE: ${MAIL_NOTIFICATIONS_QUEUE:-mail.notifications.queue}
+      LLM_BASE_URL: http://llm-service:8084
     ports:
       - "${MAIL_PUBLIC_PORT:-18083}:8083"
 

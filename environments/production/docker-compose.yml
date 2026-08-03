@@ -140,6 +140,7 @@ services:
       MAIL_DEFAULT_FROM: ${MAIL_DEFAULT_FROM}
       MAIL_ATTACHMENTS_BASE_DIR: /app/storage/attachments
       MAIL_NOTIFICATIONS_QUEUE: ${MAIL_NOTIFICATIONS_QUEUE:-mail.notifications.queue}
+      LLM_BASE_URL: ${LLM_BASE_URL:-http://llm-service:8084}
     ports:
       - "${MAIL_PUBLIC_PORT:-8083}:8083"
     volumes:
