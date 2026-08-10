@@ -6,6 +6,7 @@ Ten katalog zawiera lokalny stack developerski dla:
 - `weather-service`
 - `time-coordinator-service`
 - `mail-service`
+- `work-service`
 - `mailhog`
 
 Srodowisko `develop` jest odseparowane od `production`:
@@ -49,6 +50,7 @@ docker compose --env-file .env down
 - Weather API: `18081`
 - Time Coordinator API: `18082`
 - Mail API: `18083`
+- Work API: `18085`
 - MailHog SMTP: `11025`
 - MailHog UI: `18025`
 

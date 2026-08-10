@@ -26,12 +26,20 @@ $composeBaseArguments = @(
     "-f", $composeFile
 )
 
+$buildServices = @(
+    "weather-service",
+    "time-coordinator-service",
+    "mail-service",
+    "llm-service",
+    "work-service"
+)
+
 if ($UseCache) {
-    Write-Host "Buduje obrazy z uzyciem cache..." -ForegroundColor Cyan
-    & docker @composeBaseArguments build
+    Write-Host "Buduje obrazy uslug, w tym work-service, z uzyciem cache..." -ForegroundColor Cyan
+    & docker @composeBaseArguments build @buildServices
 } else {
-    Write-Host "Buduje wszystkie obrazy bez cache..." -ForegroundColor Cyan
-    & docker @composeBaseArguments build --no-cache
+    Write-Host "Buduje obrazy uslug, w tym work-service, bez cache..." -ForegroundColor Cyan
+    & docker @composeBaseArguments build --no-cache @buildServices
 }
 if ($LASTEXITCODE -ne 0) {
     throw "Budowanie obrazow zakonczone kodem $LASTEXITCODE."
@@ -55,3 +63,5 @@ Write-Host "Aktualny stan kontenerow:" -ForegroundColor Green
 if ($LASTEXITCODE -ne 0) {
     throw "Nie udalo sie odczytac stanu kontenerow (kod $LASTEXITCODE)."
 }
+
+& docker compose logs -f

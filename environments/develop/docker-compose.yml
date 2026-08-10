@@ -23,6 +23,9 @@ services:
       LLM_DB_NAME: ${LLM_DB_NAME:-llm}
       LLM_DB_USERNAME: ${LLM_DB_USERNAME:-llm}
       LLM_DB_PASSWORD: ${LLM_DB_PASSWORD:-dev-llm}
+      WORK_DB_NAME: ${WORK_DB_NAME:-work}
+      WORK_DB_USERNAME: ${WORK_DB_USERNAME:-work}
+      WORK_DB_PASSWORD: ${WORK_DB_PASSWORD:-dev-work}
     ports:
       - "${POSTGRES_PORT:-55432}:5432"
     volumes:
@@ -175,6 +178,31 @@ services:
     ports:
       - "${LLM_PUBLIC_PORT:-8084}:8084"
 
+  work-service:
+    build:
+      context: ../../../microservices/work
+    container_name: ${WORK_CONTAINER_NAME:-alice-dev-work-service}
+    hostname: ${WORK_HOSTNAME:-work-service}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8085
+      WORK_DB_URL: jdbc:postgresql://postgres:5432/${WORK_DB_NAME:-work}
+      WORK_DB_USERNAME: ${WORK_DB_USERNAME:-work}
+      WORK_DB_PASSWORD: ${WORK_DB_PASSWORD:-dev-work}
+      WORK_ATTACHMENTS_DIRECTORY: /app/data/task-attachments
+      WORK_JIRA_URL: ${WORK_JIRA_URL:-https://jira.consolia.pl}
+      WORK_JIRA_USERNAME: ${WORK_JIRA_USERNAME:-}
+      WORK_JIRA_PASSWORD: ${WORK_JIRA_PASSWORD:-}
+      WORK_JIRA_PAGE_SIZE: ${WORK_JIRA_PAGE_SIZE:-100}
+    ports:
+      - "${WORK_PUBLIC_PORT:-18085}:8085"
+    volumes:
+      - work_attachments:/app/data/task-attachments
+
 volumes:
   postgres_data:
   rabbitmq_data:
+  work_attachments:
