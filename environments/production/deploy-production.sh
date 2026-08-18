@@ -16,6 +16,7 @@ REPOSITORIES=(
   "$WORKSPACE_DIR/microservices/mail"
   "$WORKSPACE_DIR/microservices/time_coordinator"
   "$WORKSPACE_DIR/microservices/weather"
+  "$WORKSPACE_DIR/microservices/work"
 )
 
 OPTIONAL_REPOSITORIES=(

@@ -23,6 +23,9 @@ services:
       LLM_DB_NAME: ${LLM_DB_NAME:-llm}
       LLM_DB_USERNAME: ${LLM_DB_USERNAME:-llm}
       LLM_DB_PASSWORD: ${LLM_DB_PASSWORD:-llm123}
+      WORK_DB_NAME: ${WORK_DB_NAME:-work}
+      WORK_DB_USERNAME: ${WORK_DB_USERNAME:-work}
+      WORK_DB_PASSWORD: ${WORK_DB_PASSWORD:-work123}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -162,6 +165,30 @@ services:
       LLM_DB_PASSWORD: ${LLM_DB_PASSWORD:-llm123}
     ports:
       - "${LLM_PUBLIC_PORT:-8084}:8084"
+
+  work-service:
+    build:
+      context: ../../../microservices/work
+    container_name: ${WORK_CONTAINER_NAME:-alice-work-service}
+    hostname: ${WORK_HOSTNAME:-work-service}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8085
+      WORK_DB_URL: jdbc:postgresql://postgres:5432/${WORK_DB_NAME:-work}
+      WORK_DB_USERNAME: ${WORK_DB_USERNAME:-work}
+      WORK_DB_PASSWORD: ${WORK_DB_PASSWORD:-work123}
+      WORK_ATTACHMENTS_DIRECTORY: /app/storage/task-attachments
+      WORK_JIRA_URL: ${WORK_JIRA_URL}
+      WORK_JIRA_USERNAME: ${WORK_JIRA_USERNAME}
+      WORK_JIRA_PASSWORD: ${WORK_JIRA_PASSWORD}
+      WORK_JIRA_PAGE_SIZE: ${WORK_JIRA_PAGE_SIZE:-100}
+    ports:
+      - "${WORK_PUBLIC_PORT:-8085}:8085"
+    volumes:
+      - ${WORK_ATTACHMENTS_HOST_DIR:-./data/work-attachments}:/app/storage/task-attachments
 
 volumes:
   postgres_data:

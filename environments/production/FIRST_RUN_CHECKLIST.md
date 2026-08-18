@@ -5,6 +5,9 @@ Ta lista sluzy do pierwszego uruchomienia stacka produkcyjnego:
 - `rabbitmq`
 - `weather-service`
 - `time-coordinator-service`
+- `mail-service`
+- `llm-service`
+- `work-service`
 
 ## 1. Przygotowanie hosta
 
@@ -15,7 +18,9 @@ Ta lista sluzy do pierwszego uruchomienia stacka produkcyjnego:
   - `15672`
   - `8081`
   - `8082`
-  - `8888`
+  - `8083`
+  - `8084`
+  - `8085`
 - katalog roboczy zawiera aktualne pliki z `infra/environments/production`
 
 ## 2. Przygotowanie plikow
@@ -35,6 +40,8 @@ Na hoście Linux:
 ```bash
 chmod +x postgres/init/01-init-databases.sh
 chmod +x postgres/init/02-init-mail-database.sh
+chmod +x postgres/init/03-init-llm-database.sh
+chmod +x postgres/init/04-init-work-database.sh
 ```
 
 ## 4. Start stacka
@@ -54,6 +61,9 @@ Oczekiwany stan:
 - `rabbitmq` - `healthy`
 - `weather-service` - `running`
 - `time-coordinator-service` - `running`
+- `mail-service` - `running`
+- `llm-service` - `running`
+- `work-service` - `running`
 
 ## 6. Weryfikacja logow
 
@@ -62,6 +72,9 @@ docker compose logs postgres --tail=100
 docker compose logs rabbitmq --tail=100
 docker compose logs weather-service --tail=100
 docker compose logs time-coordinator-service --tail=100
+docker compose logs mail-service --tail=100
+docker compose logs llm-service --tail=100
+docker compose logs work-service --tail=100
 ```
 
 Sprawdz:
@@ -76,9 +89,13 @@ Sprawdz, czy istnieja:
 - baza `weather`
 - baza `time_coordinator`
 - baza `mail`
+- baza `llm`
+- baza `work`
 - uzytkownik `weather`
 - uzytkownik `time_coordinator`
 - uzytkownik `mail`
+- uzytkownik `llm`
+- uzytkownik `work`
 
 Przyklad:
 
@@ -107,6 +124,9 @@ Zweryfikuj:
 Sprawdz:
 - `http://HOST:8081`
 - `http://HOST:8082`
+- `http://HOST:8083`
+- `http://HOST:8084`
+- `http://HOST:8085`
 
 Jesli sa endpointy health, sprawdz je w pierwszej kolejnosci.
 
@@ -120,7 +140,7 @@ Jesli sa endpointy health, sprawdz je w pierwszej kolejnosci.
 
 ## 11. Po starcie
 
-- wykonaj pierwszy backup wolumenu Postgresa albo dump obu baz
+- wykonaj pierwszy backup wolumenu Postgresa albo dump wszystkich baz
 - zapisz finalne uzyte porty i hasla w menedzerze sekretow
 - ogranicz dostep do `15672` firewallem
 - jesli `5672` nie jest potrzebny z zewnatrz, zamknij go na firewallu
@@ -131,6 +151,8 @@ Jesli sa endpointy health, sprawdz je w pierwszej kolejnosci.
   - wolumen `postgres_data` juz istnial
 - `mail database missing on existing postgres volume`
   - wykonaj recznie `postgres/init/02-init-mail-database.sh`
+- `work database missing on existing postgres volume`
+  - wykonaj recznie `postgres/init/04-init-work-database.sh`
 - `database does not exist`
   - bledne zmienne w `.env`
 - `port already allocated`

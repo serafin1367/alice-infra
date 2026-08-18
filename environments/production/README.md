@@ -6,6 +6,8 @@ Ten katalog zawiera docelowy runtime produkcyjny bez reverse proxy:
 - `weather-service`
 - `time-coordinator-service`
 - `mail-service`
+- `llm-service`
+- `work-service`
 
 ## Struktura
 
@@ -13,6 +15,8 @@ Ten katalog zawiera docelowy runtime produkcyjny bez reverse proxy:
 - `.env.example` - lista wymaganych zmiennych
 - `postgres/init/01-init-databases.sh` - inicjalizacja baz `weather` i `time_coordinator`
 - `postgres/init/02-init-mail-database.sh` - inicjalizacja bazy `mail`
+- `postgres/init/03-init-llm-database.sh` - inicjalizacja bazy `llm`
+- `postgres/init/04-init-work-database.sh` - inicjalizacja bazy `work`
 - `secrets/google-calendar/` - lokalne mounty dla credentials i tokenow Google
 - `data/mail-attachments/` - lokalny katalog hosta na zapis zalacznikow mail
 - `FIRST_RUN_CHECKLIST.md` - checklista pierwszego uruchomienia
@@ -26,6 +30,8 @@ Ten katalog zawiera docelowy runtime produkcyjny bez reverse proxy:
 - `WEATHER_DB_PASSWORD`
 - `TIME_COORDINATOR_DB_PASSWORD`
 - `MAIL_DB_PASSWORD`
+- `LLM_DB_PASSWORD`
+- `WORK_DB_PASSWORD`
 - `RABBITMQ_PASSWORD`
 3. Dopasuj porty hosta, jesli domyslne sa zajete.
 4. Umiesc plik Google OAuth credentials w:
@@ -36,6 +42,7 @@ Ten katalog zawiera docelowy runtime produkcyjny bez reverse proxy:
 6. Upewnij sie, ze katalog:
 - `MAIL_ATTACHMENTS_HOST_DIR`
   istnieje na hoscie albo moze zostac utworzony przez Docker i ma byc objety backupem.
+7. Ustaw `WORK_JIRA_URL`, `WORK_JIRA_USERNAME` i `WORK_JIRA_PASSWORD` oraz upewnij sie, ze katalog `WORK_ATTACHMENTS_HOST_DIR` jest objety backupem.
 
 ## Pierwsze uruchomienie
 
@@ -71,6 +78,7 @@ Domyslnie pobierana jest galaz `main`; mozna wskazac inna przez
 
 - `postgres/init/01-init-databases.sh` wykonuje sie tylko przy pierwszym uruchomieniu pustego wolumenu `postgres_data`.
 - Zalaczniki `mail-service` sa trwale zapisywane na hoscie przez `MAIL_ATTACHMENTS_HOST_DIR`.
+- Zalaczniki `work-service` sa trwale zapisywane na hoscie przez `WORK_ATTACHMENTS_HOST_DIR`.
 - Zmiana hasel po inicjalizacji bazy wymaga recznej operacji SQL albo odtworzenia wolumenu.
 - Port `15672` od RabbitMQ management nie powinien byc wystawiony publicznie bez firewalla.
 - Web OAuth Google korzysta z callbacku HTTP aplikacji:
@@ -84,4 +92,7 @@ Domyslnie pobierana jest galaz `main`; mozna wskazac inna przez
 3. sprawdzenie migracji Flyway
 4. `http://HOST:8081`
 5. `http://HOST:8082`
+6. `http://HOST:8083`
+7. `http://HOST:8084`
+8. `http://HOST:8085`
 6. `http://HOST:15672` tylko z ograniczonym dostepem

@@ -1,0 +1,28 @@
+#!/bin/bash
+set -euo pipefail
+
+export PGPASSWORD="${POSTGRES_SUPERUSER_PASSWORD}"
+
+psql -v ON_ERROR_STOP=1 --username "${POSTGRES_SUPERUSER}" --dbname "${POSTGRES_BOOTSTRAP_DB}" <<-EOSQL
+DO
+\$do\$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '${WORK_DB_USERNAME}') THEN
+        EXECUTE format('CREATE USER %I WITH PASSWORD %L', '${WORK_DB_USERNAME}', '${WORK_DB_PASSWORD}');
+    ELSE
+        EXECUTE format('ALTER USER %I WITH PASSWORD %L', '${WORK_DB_USERNAME}', '${WORK_DB_PASSWORD}');
+    END IF;
+END
+\$do\$;
+EOSQL
+
+if ! psql -tA --username "${POSTGRES_SUPERUSER}" --dbname "${POSTGRES_BOOTSTRAP_DB}" \
+    -c "SELECT 1 FROM pg_database WHERE datname = '${WORK_DB_NAME}'" | grep -q 1; then
+    psql -v ON_ERROR_STOP=1 --username "${POSTGRES_SUPERUSER}" --dbname "${POSTGRES_BOOTSTRAP_DB}" \
+        -c "CREATE DATABASE \"${WORK_DB_NAME}\" OWNER \"${WORK_DB_USERNAME}\""
+fi
+
+psql -v ON_ERROR_STOP=1 --username "${POSTGRES_SUPERUSER}" --dbname "${WORK_DB_NAME}" <<-EOSQL
+REVOKE ALL ON DATABASE "${WORK_DB_NAME}" FROM PUBLIC;
+GRANT ALL PRIVILEGES ON DATABASE "${WORK_DB_NAME}" TO "${WORK_DB_USERNAME}";
+EOSQL

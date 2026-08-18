@@ -17,6 +17,9 @@ Sprawdz:
 ```bash
 docker compose logs weather-service --tail=100
 docker compose logs time-coordinator-service --tail=100
+docker compose logs mail-service --tail=100
+docker compose logs llm-service --tail=100
+docker compose logs work-service --tail=100
 ```
 
 Sprawdz:
@@ -26,7 +29,7 @@ Sprawdz:
 
 ## Flyway
 
-Sprawdz w logach obu aplikacji:
+Sprawdz w logach wszystkich aplikacji:
 - migracje wykonaly sie bez bledow
 - nie ma rollbacku startu aplikacji
 
@@ -35,6 +38,9 @@ Sprawdz w logach obu aplikacji:
 Sprawdz recznie:
 - `http://HOST:8081`
 - `http://HOST:8082`
+- `http://HOST:8083`
+- `http://HOST:8084`
+- `http://HOST:8085`
 
 Jesli wprowadzicie endpointy health, dopiszcie je tutaj jako glowny check.
 
@@ -48,7 +54,7 @@ Sprawdz:
 ## Postgres
 
 Sprawdz:
-- obie bazy istnieja
+- bazy `weather`, `time_coordinator`, `mail`, `llm` i `work` istnieja
 - aplikacje zapisują i czytają dane
 
 ## Google Calendar
