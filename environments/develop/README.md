@@ -47,19 +47,19 @@ docker compose --env-file .env down
 - Postgres: `55432`
 - RabbitMQ AMQP: `55672`
 - RabbitMQ panel: `15673`
-- Weather API: `18081`
-- Time Coordinator API: `18082`
-- Mail API: `18083`
-- Work API: `18085`
+- Weather API: `19081`
+- Time Coordinator API: `19082`
+- Mail API: `19083`
+- Work API: `19085`
 - MailHog SMTP: `11025`
-- MailHog UI: `18025`
+- MailHog UI: `19025`
 
 ## OAuth w develop
 
 Domyslny callback Google OAuth:
 
 ```text
-http://localhost:18082/api/google/calendar/oauth/callback
+http://localhost:19082/api/google/calendar/oauth/callback
 ```
 
 Ten adres musi byc dodany do dozwolonych redirect URI w projekcie Google OAuth dla develop.

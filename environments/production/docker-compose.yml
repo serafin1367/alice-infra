@@ -158,6 +158,7 @@ services:
     environment:
       SERVER_PORT: 8084
       WEATHER_BASE_URL: ${WEATHER_BASE_URL:-http://weather-service:8081}
+      WORK_BASE_URL: ${WORK_BASE_URL:-http://work-service:8085}
       TELEGRAM_ENABLED: ${TELEGRAM_ENABLED:-false}
       TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN:-}"
       LLM_DB_URL: jdbc:postgresql://postgres:5432/${LLM_DB_NAME:-llm}
