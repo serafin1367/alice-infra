@@ -1,8 +1,3 @@
-[CmdletBinding()]
-param(
-    [switch]$UseCache
-)
-
 $ErrorActionPreference = "Stop"
 $composeFile = Join-Path $PSScriptRoot "docker-compose.yml"
 
@@ -27,20 +22,18 @@ $composeBaseArguments = @(
 )
 
 $buildServices = @(
+    "alice-web",
     "weather-service",
     "time-coordinator-service",
     "mail-service",
     "llm-service",
-    "work-service"
+    "work-service",
+    "shopping-service",
+    "knowledge-service"
 )
 
-if ($UseCache) {
-    Write-Host "Buduje obrazy uslug, w tym work-service, z uzyciem cache..." -ForegroundColor Cyan
-    & docker @composeBaseArguments build @buildServices
-} else {
-    Write-Host "Buduje obrazy uslug, w tym work-service, bez cache..." -ForegroundColor Cyan
-    & docker @composeBaseArguments build --no-cache @buildServices
-}
+Write-Host "Buduje wszystkie obrazy uslug od nowa, bez cache..." -ForegroundColor Cyan
+& docker @composeBaseArguments build --no-cache @buildServices
 if ($LASTEXITCODE -ne 0) {
     throw "Budowanie obrazow zakonczone kodem $LASTEXITCODE."
 }

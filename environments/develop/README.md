@@ -7,6 +7,7 @@ Ten katalog zawiera lokalny stack developerski dla:
 - `time-coordinator-service`
 - `mail-service`
 - `work-service`
+- `shopping-service`
 - `mailhog`
 
 Srodowisko `develop` jest odseparowane od `production`:
@@ -51,6 +52,8 @@ docker compose --env-file .env down
 - Time Coordinator API: `19082`
 - Mail API: `19083`
 - Work API: `19085`
+- Shopping API: `19086`
+- Shopping (API i PWA): `19086`
 - MailHog SMTP: `11025`
 - MailHog UI: `19025`
 
@@ -63,3 +66,7 @@ http://localhost:19082/api/google/calendar/oauth/callback
 ```
 
 Ten adres musi byc dodany do dozwolonych redirect URI w projekcie Google OAuth dla develop.
+
+## Alice Web
+
+Serwis `alice-web` udostępnia stronę startową oraz moduły Knowledge i Shopping pod http://localhost:19080/. Uruchomienie: `docker compose up -d --build --no-deps alice-web`. Wymaga działających backendów dla funkcji modułów, lecz samą stronę startową można uruchomić niezależnie. Domyślne powiązanie portu to `127.0.0.1`; ustawienia dostępu LAN i plan publikacji internetowej opisuje `../../../alice-web/README.md`.

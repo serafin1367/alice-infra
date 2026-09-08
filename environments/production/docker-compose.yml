@@ -1,4 +1,20 @@
 services:
+  alice-web:
+    build:
+      context: ../../../alice-web
+    container_name: ${ALICE_WEB_CONTAINER_NAME:-alice-web}
+    restart: unless-stopped
+    environment:
+      KNOWLEDGE_UPSTREAM: ${ALICE_WEB_KNOWLEDGE_UPSTREAM:-http://knowledge-service:8087}
+      SHOPPING_UPSTREAM: ${ALICE_WEB_SHOPPING_UPSTREAM:-http://shopping-service:8086}
+    ports:
+      - "${ALICE_WEB_BIND_IP:-127.0.0.1}:${ALICE_WEB_PUBLIC_PORT:-8080}:80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
   postgres:
     image: postgres:17
     container_name: ${POSTGRES_CONTAINER_NAME:-alice-postgres}
@@ -26,6 +42,12 @@ services:
       WORK_DB_NAME: ${WORK_DB_NAME:-work}
       WORK_DB_USERNAME: ${WORK_DB_USERNAME:-work}
       WORK_DB_PASSWORD: ${WORK_DB_PASSWORD:-work123}
+      SHOPPING_DB_NAME: ${SHOPPING_DB_NAME:-shopping}
+      SHOPPING_DB_USERNAME: ${SHOPPING_DB_USERNAME:-shopping}
+      SHOPPING_DB_PASSWORD: ${SHOPPING_DB_PASSWORD:-shopping123}
+      KNOWLEDGE_DB_NAME: ${KNOWLEDGE_DB_NAME:-knowledge}
+      KNOWLEDGE_DB_USERNAME: ${KNOWLEDGE_DB_USERNAME:-knowledge}
+      KNOWLEDGE_DB_PASSWORD: ${KNOWLEDGE_DB_PASSWORD:?Set KNOWLEDGE_DB_PASSWORD in production .env}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -155,10 +177,21 @@ services:
     container_name: ${LLM_CONTAINER_NAME:-alice-llm-service}
     hostname: ${LLM_HOSTNAME:-llm-service}
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
       SERVER_PORT: 8084
       WEATHER_BASE_URL: ${WEATHER_BASE_URL:-http://weather-service:8081}
       WORK_BASE_URL: ${WORK_BASE_URL:-http://work-service:8085}
+      TIME_COORDINATOR_BASE_URL: ${TIME_COORDINATOR_BASE_URL:-http://time-coordinator-service:8082}
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      SPRING_RABBITMQ_VIRTUAL_HOST: ${RABBITMQ_VHOST:-alice}
       TELEGRAM_ENABLED: ${TELEGRAM_ENABLED:-false}
       TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN:-}"
       LLM_DB_URL: jdbc:postgresql://postgres:5432/${LLM_DB_NAME:-llm}
@@ -190,6 +223,44 @@ services:
       - "${WORK_PUBLIC_PORT:-8085}:8085"
     volumes:
       - ${WORK_ATTACHMENTS_HOST_DIR:-./data/work-attachments}:/app/storage/task-attachments
+
+  shopping-service:
+    build:
+      context: ../../../microservices/shopping
+    container_name: ${SHOPPING_CONTAINER_NAME:-alice-shopping-service}
+    hostname: ${SHOPPING_HOSTNAME:-shopping-service}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8086
+      SHOPPING_DB_URL: jdbc:postgresql://postgres:5432/${SHOPPING_DB_NAME:-shopping}
+      SHOPPING_DB_USERNAME: ${SHOPPING_DB_USERNAME:-shopping}
+      SHOPPING_DB_PASSWORD: ${SHOPPING_DB_PASSWORD:-shopping123}
+    ports:
+      - "${SHOPPING_PUBLIC_PORT:-8086}:8086"
+
+  knowledge-service:
+    build:
+      context: ../../../microservices/knowledge
+    container_name: ${KNOWLEDGE_CONTAINER_NAME:-alice-knowledge-service}
+    hostname: ${KNOWLEDGE_HOSTNAME:-knowledge-service}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8087
+      KNOWLEDGE_DB_URL: jdbc:postgresql://postgres:5432/${KNOWLEDGE_DB_NAME:-knowledge}
+      KNOWLEDGE_DB_USERNAME: ${KNOWLEDGE_DB_USERNAME:-knowledge}
+      KNOWLEDGE_DB_PASSWORD: ${KNOWLEDGE_DB_PASSWORD:-knowledge123}
+      KNOWLEDGE_STORAGE_DIRECTORY: /app/storage/projects
+      LLM_BASE_URL: http://llm-service:8084
+    ports:
+      - "${KNOWLEDGE_PUBLIC_PORT:-8087}:8087"
+    volumes:
+      - ${KNOWLEDGE_STORAGE_HOST_DIR:-./data/knowledge-projects}:/app/storage/projects
 
 volumes:
   postgres_data:

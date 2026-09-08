@@ -17,6 +17,9 @@ REPOSITORIES=(
   "$WORKSPACE_DIR/microservices/time_coordinator"
   "$WORKSPACE_DIR/microservices/weather"
   "$WORKSPACE_DIR/microservices/work"
+  "$WORKSPACE_DIR/microservices/shopping"
+  "$WORKSPACE_DIR/microservices/knowledge"
+  "$WORKSPACE_DIR/alice-web"
 )
 
 OPTIONAL_REPOSITORIES=(
@@ -46,6 +49,10 @@ update_repository() {
   fi
 
   echo "Aktualizacja: $name ($BRANCH)"
+  if [[ "$(git -C "$repository" branch --show-current)" != "$BRANCH" ]]; then
+    echo "Repozytorium $name nie jest na galezi $BRANCH. Przerywam." >&2
+    exit 1
+  fi
   git -C "$repository" fetch origin "$BRANCH"
   git -C "$repository" merge --ff-only "origin/$BRANCH"
 }
@@ -73,11 +80,16 @@ done
 echo "Walidacja konfiguracji Docker Compose"
 docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" config -q
 
-echo "Zatrzymywanie stosu produkcyjnego (wolumeny danych zostaja zachowane)"
-docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" down --remove-orphans
+echo "Budowanie obrazow przed zmiana dzialajacych uslug"
+docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" build
 
-echo "Budowanie i uruchamianie stosu produkcyjnego"
-docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" up -d --build --remove-orphans
+echo "Uruchomienie infrastruktury i uzupelnienie brakujacych baz"
+docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" up -d --wait postgres rabbitmq
+docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/05-init-shopping-database.sh
+docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/06-init-knowledge-database.sh
+
+echo "Aktualizacja uslug bez usuwania wolumenow"
+docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" up -d --no-build
 
 echo "Aktualny stan kontenerow"
 docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" ps
