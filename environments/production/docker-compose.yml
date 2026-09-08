@@ -260,7 +260,7 @@ services:
     ports:
       - "${KNOWLEDGE_PUBLIC_PORT:-8087}:8087"
     volumes:
-      - ${KNOWLEDGE_STORAGE_HOST_DIR:-./data/knowledge-projects}:/app/storage/projects
+      - ${KNOWLEDGE_STORAGE_HOST_DIR:-/mnt/md0/docker/docker-volume/alice_ai/knowledge}:/app/storage/projects
 
 volumes:
   postgres_data:

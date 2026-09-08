@@ -116,3 +116,15 @@ Domyślny binding Alice Web pozostaje lokalny. Dostęp z internetu wymaga HTTPS 
 ## Automatyczne klonowanie
 
 Skrypt deploy-production.sh klonuje brakujące wymagane repozytoria na gałęzi DEPLOY_BRANCH (domyślnie main). Istniejące repozytoria zachowują origin i są aktualizowane fast-forward. Niepusty katalog bez Git blokuje wdrożenie, aby nie nadpisać danych. Pusty katalog jest dopuszczalny. Desktop pozostaje opcjonalny i nie jest klonowany automatycznie. Git na serwerze musi mieć dostęp do wskazanych repozytoriów GitLab.
+
+## Pliki Knowledge na produkcji
+
+Katalog hosta `/mnt/md0/docker/docker-volume/alice_ai/knowledge/` jest montowany do `/app/storage/projects` w kontenerze Knowledge. Zawiera katalogi projektów i ich pliki; baza PostgreSQL pozostaje w swoim dotychczasowym wolumenie.
+
+W istniejącym produkcyjnym `.env` ustaw:
+
+```dotenv
+KNOWLEDGE_STORAGE_HOST_DIR=/mnt/md0/docker/docker-volume/alice_ai/knowledge
+```
+
+Wartość z `.env` nadpisuje domyślną ścieżkę Compose. Przed zmianą montowania przenieś dotychczasowe pliki Knowledge do nowego katalogu (jeżeli są już zapisane); sama zmiana konfiguracji ich nie przenosi. Katalog powinien być objęty backupem i zapisywalny przez kontener. Odtwórz usługę przez skrypt wdrożeniowy lub `docker compose --env-file .env up -d knowledge-service`.
