@@ -105,7 +105,7 @@ Domyslnie pobierana jest galaz `main`; mozna wskazac inna przez
 
 Repozytoria wymagane na serwerze: infra, alice-web, microservices/llm, mail, shopping, knowledge, time_coordinator, weather i work. Desktop jest opcjonalny. Health nie ma jeszcze aplikacji ani obrazu, więc nie jest wdrażany.
 
-1. Sklonuj Alice Web z `http://gitlab.mbb.net.pl/alice/alice-web.git` do `<workspace>/alice-web`, a Knowledge do `<workspace>/microservices/knowledge`.
+1. Pobierz aktualne repozytorium infra. Skrypt automatycznie sklonuje brakujące wymagane repozytoria, w tym Alice Web i Knowledge. Adres Knowledge: `http://gitlab.mbb.net.pl/alice/microservices/knowledge.git`.
 2. Uzupełnij produkcyjne `.env`: `KNOWLEDGE_DB_NAME`, `KNOWLEDGE_DB_USERNAME`, `KNOWLEDGE_DB_PASSWORD`, `KNOWLEDGE_STORAGE_HOST_DIR`, `ALICE_WEB_PUBLIC_PORT` (domyślnie 8080), `ALICE_WEB_BIND_IP` (domyślnie 127.0.0.1). Hasła muszą odpowiadać istniejącym rolom bazy; skrypty nie resetują istniejących haseł.
 3. Wykonaj backup bazy PostgreSQL i katalogów danych przed aktualizacją. Skrypt nie kopiuje danych developerskich na produkcję. Istniejące dane produkcyjne pozostają w swoich wolumenach/katalogach.
 4. Pobierz aktualizację infra, następnie uruchom `bash deploy-production.sh`. Skrypt wymaga wskazanej gałęzi, wykonuje tylko merge fast-forward, buduje wszystkie obrazy przed zmianą działających usług, uruchamia infrastrukturę i tworzy brakujące bazy Shopping/Knowledge także na istniejącym wolumenie. Na koniec odtwarza zmienione kontenery bez `down` i bez kasowania wolumenów.
@@ -113,3 +113,6 @@ Repozytoria wymagane na serwerze: infra, alice-web, microservices/llm, mail, sho
 6. W produkcyjnym LLM skonfiguruj profil z przeznaczeniem `KNOWLEDGE`. Profil developerski nie jest automatycznie przenoszony. Powinien obsługiwać JSON z `message` i `actions` dla propozycji zmian; dane dostawcy/modelu pozostają w produkcyjnej konfiguracji LLM.
 
 Domyślny binding Alice Web pozostaje lokalny. Dostęp z internetu wymaga HTTPS i uwierzytelniania obejmującego stronę, API i WebSocket. Nie publikuj bezpośrednio niechronionych API; istniejące porty developerskie/administracyjne backendów należy ograniczyć zaporą lub bindingiem hosta. Aktualizacja nie otwiera routera i nie konfiguruje domeny.
+## Automatyczne klonowanie
+
+Skrypt deploy-production.sh klonuje brakujące wymagane repozytoria na gałęzi DEPLOY_BRANCH (domyślnie main). Istniejące repozytoria zachowują origin i są aktualizowane fast-forward. Niepusty katalog bez Git blokuje wdrożenie, aby nie nadpisać danych. Pusty katalog jest dopuszczalny. Desktop pozostaje opcjonalny i nie jest klonowany automatycznie. Git na serwerze musi mieć dostęp do wskazanych repozytoriów GitLab.

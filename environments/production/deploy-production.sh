@@ -9,6 +9,19 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE_DIR="$(cd -- "$SCRIPT_DIR/../../.." && pwd)"
 COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
 BRANCH="${DEPLOY_BRANCH:-main}"
+source "$SCRIPT_DIR/repository-functions.sh"
+
+declare -A REPOSITORY_URLS=(
+  [infra]="http://gitlab.mbb.net.pl/alice/infra.git"
+  [llm]="http://gitlab.mbb.net.pl/alice/microservices/llm.git"
+  [mail]="http://gitlab.mbb.net.pl/alice/microservices/mail.git"
+  [time_coordinator]="http://gitlab.mbb.net.pl/alice/microservices/time_coordinator.git"
+  [weather]="http://gitlab.mbb.net.pl/alice/microservices/weather.git"
+  [work]="http://gitlab.mbb.net.pl/alice/microservices/work.git"
+  [shopping]="http://gitlab.mbb.net.pl/alice/microservices/shop.git"
+  [knowledge]="http://gitlab.mbb.net.pl/alice/microservices/knowledge.git"
+  [alice-web]="http://gitlab.mbb.net.pl/alice/alice-web.git"
+)
 
 REPOSITORIES=(
   "$WORKSPACE_DIR/infra"
@@ -38,10 +51,7 @@ update_repository() {
   local name
   name="$(basename "$repository")"
 
-  [[ -d "$repository/.git" ]] || {
-    echo "Brak repozytorium Git: $repository" >&2
-    exit 1
-  }
+  ensure_repository "$repository" "${REPOSITORY_URLS[$name]:-}" "$BRANCH"
 
   if [[ -n "$(git -C "$repository" status --porcelain --untracked-files=no)" ]]; then
     echo "Repozytorium $name ma zmienione pliki sledzone przez Git. Przerywam wdrozenie." >&2
@@ -70,7 +80,7 @@ for repository in "${REPOSITORIES[@]}"; do
 done
 
 for repository in "${OPTIONAL_REPOSITORIES[@]}"; do
-  if [[ -d "$repository/.git" ]]; then
+  if [[ -e "$repository/.git" ]]; then
     update_repository "$repository"
   else
     echo "Pominieto opcjonalne repozytorium: $repository"
