@@ -21,6 +21,7 @@ declare -A REPOSITORY_URLS=(
   [shopping]="http://gitlab.mbb.net.pl/alice/microservices/shop.git"
   [knowledge]="http://gitlab.mbb.net.pl/alice/microservices/knowledge.git"
   [alice-web]="http://gitlab.mbb.net.pl/alice/alice-web.git"
+  [dashboard]="http://gitlab.mbb.net.pl/alice/microservices/dashboard.git"
 )
 
 REPOSITORIES=(
@@ -32,6 +33,7 @@ REPOSITORIES=(
   "$WORKSPACE_DIR/microservices/work"
   "$WORKSPACE_DIR/microservices/shopping"
   "$WORKSPACE_DIR/microservices/knowledge"
+  "$WORKSPACE_DIR/microservices/dashboard"
   "$WORKSPACE_DIR/alice-web"
 )
 
