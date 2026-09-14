@@ -19,9 +19,9 @@ declare -A REPOSITORY_URLS=(
   [weather]="http://gitlab.mbb.net.pl/alice/microservices/weather.git"
   [work]="http://gitlab.mbb.net.pl/alice/microservices/work.git"
   [shopping]="http://gitlab.mbb.net.pl/alice/microservices/shop.git"
-  [knowledge]="http://gitlab.mbb.net.pl/alice/microservices/knowledge.git"
-  [alice-web]="http://gitlab.mbb.net.pl/alice/alice-web.git"
+  [knowledge]="http://gitlab.mbb.net.pl/alice/microservices/knowledge.git"  
   [dashboard]="http://gitlab.mbb.net.pl/alice/microservices/dashboard.git"
+  [alice-web]="http://gitlab.mbb.net.pl/alice/alice-web.git"
 )
 
 REPOSITORIES=(
@@ -76,7 +76,7 @@ require_command docker
   echo "Brak pliku produkcyjnego: $SCRIPT_DIR/.env" >&2
   exit 1
 }
-
+git 
 for repository in "${REPOSITORIES[@]}"; do
   update_repository "$repository"
 done
