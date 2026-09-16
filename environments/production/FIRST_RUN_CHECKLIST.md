@@ -64,6 +64,7 @@ Oczekiwany stan:
 - `mail-service` - `running`
 - `llm-service` - `running`
 - `work-service` - `running`
+- `health-service` - `running`
 
 ## 6. Weryfikacja logow
 

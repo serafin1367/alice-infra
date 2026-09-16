@@ -10,6 +10,7 @@ services:
       TIME_UPSTREAM: ${ALICE_WEB_TIME_UPSTREAM:-http://time-coordinator-service:8082}
       DASHBOARD_UPSTREAM: ${ALICE_WEB_DASHBOARD_UPSTREAM:-http://dashboard-service:8088}
       SHOPPING_UPSTREAM: ${ALICE_WEB_SHOPPING_UPSTREAM:-http://shopping-service:8086}
+      HEALTH_UPSTREAM: ${ALICE_WEB_HEALTH_UPSTREAM:-http://health-service:8089}
     ports:
       - "${ALICE_WEB_BIND_IP:-127.0.0.1}:${ALICE_WEB_PUBLIC_PORT:-8080}:80"
     healthcheck:
@@ -66,6 +67,9 @@ services:
       KNOWLEDGE_DB_NAME: ${KNOWLEDGE_DB_NAME:-knowledge}
       KNOWLEDGE_DB_USERNAME: ${KNOWLEDGE_DB_USERNAME:-knowledge}
       KNOWLEDGE_DB_PASSWORD: ${KNOWLEDGE_DB_PASSWORD:?Set KNOWLEDGE_DB_PASSWORD in production .env}
+      HEALTH_DB_NAME: ${HEALTH_DB_NAME:-health}
+      HEALTH_DB_USERNAME: ${HEALTH_DB_USERNAME:-health}
+      HEALTH_DB_PASSWORD: ${HEALTH_DB_PASSWORD:?Set HEALTH_DB_PASSWORD in production .env}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -279,6 +283,26 @@ services:
       - "${KNOWLEDGE_PUBLIC_PORT:-8087}:8087"
     volumes:
       - ${KNOWLEDGE_STORAGE_HOST_DIR:-/mnt/md0/docker/docker-volume/alice_ai/knowledge}:/app/storage/projects
+
+  health-service:
+    build:
+      context: ../../../microservices/health
+    container_name: ${HEALTH_CONTAINER_NAME:-alice-health-service}
+    hostname: ${HEALTH_HOSTNAME:-health-service}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      llm-service:
+        condition: service_started
+    environment:
+      SERVER_PORT: 8089
+      HEALTH_DB_URL: jdbc:postgresql://postgres:5432/${HEALTH_DB_NAME:-health}
+      HEALTH_DB_USERNAME: ${HEALTH_DB_USERNAME:-health}
+      HEALTH_DB_PASSWORD: ${HEALTH_DB_PASSWORD:?Set HEALTH_DB_PASSWORD in production .env}
+      LLM_BASE_URL: ${LLM_BASE_URL:-http://llm-service:8084}
+    ports:
+      - "${HEALTH_PUBLIC_PORT:-8089}:8089"
 
 volumes:
   dashboard_data:

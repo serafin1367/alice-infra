@@ -42,7 +42,7 @@ Sprawdz recznie:
 - `http://HOST:8084`
 - `http://HOST:8085`
 
-Jesli wprowadzicie endpointy health, dopiszcie je tutaj jako glowny check.
+Sprawdz endpoint Health przez Alice Web: `http://HOST:8080/api/health/setup`.
 
 ## RabbitMQ
 

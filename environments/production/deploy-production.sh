@@ -21,6 +21,7 @@ declare -A REPOSITORY_URLS=(
   [shopping]="http://gitlab.mbb.net.pl/alice/microservices/shop.git"
   [knowledge]="http://gitlab.mbb.net.pl/alice/microservices/knowledge.git"  
   [dashboard]="http://gitlab.mbb.net.pl/alice/microservices/dashboard.git"
+  [health]="http://gitlab.mbb.net.pl/alice/microservices/health.git"
   [alice-web]="http://gitlab.mbb.net.pl/alice/alice-web.git"
 )
 
@@ -34,6 +35,7 @@ REPOSITORIES=(
   "$WORKSPACE_DIR/microservices/shopping"
   "$WORKSPACE_DIR/microservices/knowledge"
   "$WORKSPACE_DIR/microservices/dashboard"
+  "$WORKSPACE_DIR/microservices/health"
   "$WORKSPACE_DIR/alice-web"
 )
 
@@ -76,7 +78,6 @@ require_command docker
   echo "Brak pliku produkcyjnego: $SCRIPT_DIR/.env" >&2
   exit 1
 }
-git 
 for repository in "${REPOSITORIES[@]}"; do
   update_repository "$repository"
 done
@@ -99,6 +100,7 @@ echo "Uruchomienie infrastruktury i uzupelnienie brakujacych baz"
 docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" up -d --wait postgres rabbitmq
 docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/05-init-shopping-database.sh
 docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/06-init-knowledge-database.sh
+docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/07-init-health-database.sh
 
 echo "Aktualizacja uslug bez usuwania wolumenow"
 docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" up -d --no-build

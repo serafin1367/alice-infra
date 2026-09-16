@@ -103,7 +103,7 @@ Domyslnie pobierana jest galaz `main`; mozna wskazac inna przez
 
 ## Wdrożenie Alice Web i Knowledge
 
-Repozytoria wymagane na serwerze: infra, alice-web, microservices/llm, mail, shopping, knowledge, time_coordinator, weather i work. Desktop jest opcjonalny. Health nie ma jeszcze aplikacji ani obrazu, więc nie jest wdrażany.
+Repozytoria wymagane na serwerze: infra, alice-web oraz microservices/llm, mail, shopping, knowledge, time_coordinator, weather, work, dashboard i health. Desktop jest opcjonalny. Skrypt wdrożeniowy automatycznie klonuje także Health i uruchamia jego migracje Flyway.
 
 1. Pobierz aktualne repozytorium infra. Skrypt automatycznie sklonuje brakujące wymagane repozytoria, w tym Alice Web i Knowledge. Adres Knowledge: `http://gitlab.mbb.net.pl/alice/microservices/knowledge.git`.
 2. Uzupełnij produkcyjne `.env`: `KNOWLEDGE_DB_NAME`, `KNOWLEDGE_DB_USERNAME`, `KNOWLEDGE_DB_PASSWORD`, `KNOWLEDGE_STORAGE_HOST_DIR`, `ALICE_WEB_PUBLIC_PORT` (domyślnie 8080), `ALICE_WEB_BIND_IP` (domyślnie 127.0.0.1). Hasła muszą odpowiadać istniejącym rolom bazy; skrypty nie resetują istniejących haseł.
