@@ -27,6 +27,7 @@ Ta lista sluzy do pierwszego uruchomienia stacka produkcyjnego:
 
 - skopiowano `.env.example` do `.env`
 - ustawiono mocne hasla w `.env`
+- ustawiono `HEALTH_INTERNAL_TOKEN` albo pozostawiono jego wygenerowanie skryptowi `deploy-production.sh`
 - dopasowano porty hosta w `.env`, jesli domyslne sa zajete
 - dodano plik:
   - `secrets/google-calendar/credentials.json`

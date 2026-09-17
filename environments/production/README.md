@@ -9,6 +9,9 @@ Ten katalog zawiera docelowy runtime produkcyjny z aplikacją Alice Web i jej br
 - `llm-service`
 - `work-service`
 - `shopping-service`
+- `knowledge-service`
+- `health-service`
+- `budget-service`
 
 ## Struktura
 
@@ -35,7 +38,14 @@ Ten katalog zawiera docelowy runtime produkcyjny z aplikacją Alice Web i jej br
 - `LLM_DB_PASSWORD`
 - `WORK_DB_PASSWORD`
 - `SHOPPING_DB_PASSWORD`
+- `KNOWLEDGE_DB_PASSWORD`
+- `HEALTH_DB_PASSWORD`
+- `BUDGET_DB_PASSWORD`
 - `RABBITMQ_PASSWORD`
+
+`HEALTH_INTERNAL_TOKEN` musi byc dlugim losowym sekretem wspoldzielonym przez Health i LLM.
+Skrypt `deploy-production.sh` automatycznie generuje i zapisuje brakujaca wartosc w
+produkcyjnym `.env`, dzieki czemu aktualizacja starszej instalacji nie zatrzymuje sie na walidacji Compose.
 3. Dopasuj porty hosta, jesli domyslne sa zajete.
 4. Umiesc plik Google OAuth credentials w:
 - `secrets/google-calendar/credentials.json`

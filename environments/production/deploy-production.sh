@@ -22,6 +22,7 @@ declare -A REPOSITORY_URLS=(
   [knowledge]="http://gitlab.mbb.net.pl/alice/microservices/knowledge.git"  
   [dashboard]="http://gitlab.mbb.net.pl/alice/microservices/dashboard.git"
   [health]="http://gitlab.mbb.net.pl/alice/microservices/health.git"
+  [budget]="http://gitlab.mbb.net.pl/alice/microservices/budget.git"
   [alice-web]="http://gitlab.mbb.net.pl/alice/alice-web.git"
 )
 
@@ -36,6 +37,7 @@ REPOSITORIES=(
   "$WORKSPACE_DIR/microservices/knowledge"
   "$WORKSPACE_DIR/microservices/dashboard"
   "$WORKSPACE_DIR/microservices/health"
+  "$WORKSPACE_DIR/microservices/budget"
   "$WORKSPACE_DIR/alice-web"
 )
 
@@ -78,6 +80,15 @@ require_command docker
   echo "Brak pliku produkcyjnego: $SCRIPT_DIR/.env" >&2
   exit 1
 }
+
+# Starsze pliki .env nie zawieraja tokenu dodanego wraz z integracja Health-LLM.
+# Wygeneruj go raz; obie uslugi otrzymaja te sama wartosc.
+if ! grep -Eq '^HEALTH_INTERNAL_TOKEN=.+$' "$SCRIPT_DIR/.env"; then
+  health_internal_token="$(od -An -N32 -tx1 /dev/urandom | tr -d '[:space:]')"
+  printf '\nHEALTH_INTERNAL_TOKEN=%s\n' "$health_internal_token" >> "$SCRIPT_DIR/.env"
+  chmod 600 "$SCRIPT_DIR/.env"
+  echo "Wygenerowano brakujacy HEALTH_INTERNAL_TOKEN w produkcyjnym .env"
+fi
 for repository in "${REPOSITORIES[@]}"; do
   update_repository "$repository"
 done
