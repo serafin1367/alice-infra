@@ -85,7 +85,8 @@ chmod +x deploy-production.sh
 ```
 
 Domyslnie pobierana jest galaz `main`; mozna wskazac inna przez
-`DEPLOY_BRANCH=nazwa-galezi ./deploy-production.sh`.
+`DEPLOY_BRANCH=nazwa-galezi ./deploy-production.sh`. Repozytorium Budget korzysta
+z galezi `master`, zdefiniowanej osobno w skrypcie wdrozeniowym.
 
 ## Operacyjne uwagi
 
