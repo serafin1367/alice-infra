@@ -26,10 +26,6 @@ declare -A REPOSITORY_URLS=(
   [alice-web]="http://gitlab.mbb.net.pl/alice/alice-web.git"
 )
 
-declare -A REPOSITORY_BRANCHES=(
-  [budget]="master"
-)
-
 REPOSITORIES=(
   "$WORKSPACE_DIR/infra"
   "$WORKSPACE_DIR/microservices/llm"
@@ -59,24 +55,22 @@ require_command() {
 update_repository() {
   local repository="$1"
   local name
-  local repository_branch
   name="$(basename "$repository")"
-  repository_branch="${REPOSITORY_BRANCHES[$name]:-$BRANCH}"
 
-  ensure_repository "$repository" "${REPOSITORY_URLS[$name]:-}" "$repository_branch"
+  ensure_repository "$repository" "${REPOSITORY_URLS[$name]:-}" "$BRANCH"
 
   if [[ -n "$(git -C "$repository" status --porcelain --untracked-files=no)" ]]; then
     echo "Repozytorium $name ma zmienione pliki sledzone przez Git. Przerywam wdrozenie." >&2
     exit 1
   fi
 
-  echo "Aktualizacja: $name ($repository_branch)"
-  if [[ "$(git -C "$repository" branch --show-current)" != "$repository_branch" ]]; then
-    echo "Repozytorium $name nie jest na galezi $repository_branch. Przerywam." >&2
+  echo "Aktualizacja: $name ($BRANCH)"
+  if [[ "$(git -C "$repository" branch --show-current)" != "$BRANCH" ]]; then
+    echo "Repozytorium $name nie jest na galezi $BRANCH. Przerywam." >&2
     exit 1
   fi
-  git -C "$repository" fetch origin "$repository_branch"
-  git -C "$repository" merge --ff-only "origin/$repository_branch"
+  git -C "$repository" fetch origin "$BRANCH"
+  git -C "$repository" merge --ff-only "origin/$BRANCH"
 }
 
 require_command git
