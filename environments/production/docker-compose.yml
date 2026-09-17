@@ -10,6 +10,7 @@ services:
       TIME_UPSTREAM: ${ALICE_WEB_TIME_UPSTREAM:-http://time-coordinator-service:8082}
       DASHBOARD_UPSTREAM: ${ALICE_WEB_DASHBOARD_UPSTREAM:-http://dashboard-service:8088}
       SHOPPING_UPSTREAM: ${ALICE_WEB_SHOPPING_UPSTREAM:-http://shopping-service:8086}
+      BUDGET_UPSTREAM: ${ALICE_WEB_BUDGET_UPSTREAM:-http://budget-service:8087}
       HEALTH_UPSTREAM: ${ALICE_WEB_HEALTH_UPSTREAM:-http://health-service:8089}
     ports:
       - "${ALICE_WEB_BIND_IP:-127.0.0.1}:${ALICE_WEB_PUBLIC_PORT:-8080}:80"
@@ -70,6 +71,9 @@ services:
       HEALTH_DB_NAME: ${HEALTH_DB_NAME:-health}
       HEALTH_DB_USERNAME: ${HEALTH_DB_USERNAME:-health}
       HEALTH_DB_PASSWORD: ${HEALTH_DB_PASSWORD:?Set HEALTH_DB_PASSWORD in production .env}
+      BUDGET_DB_NAME: ${BUDGET_DB_NAME:-budget}
+      BUDGET_DB_USERNAME: ${BUDGET_DB_USERNAME:-budget}
+      BUDGET_DB_PASSWORD: ${BUDGET_DB_PASSWORD:?Set BUDGET_DB_PASSWORD in production .env}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -209,6 +213,8 @@ services:
       WEATHER_BASE_URL: ${WEATHER_BASE_URL:-http://weather-service:8081}
       WORK_BASE_URL: ${WORK_BASE_URL:-http://work-service:8085}
       TIME_COORDINATOR_BASE_URL: ${TIME_COORDINATOR_BASE_URL:-http://time-coordinator-service:8082}
+      HEALTH_BASE_URL: ${HEALTH_BASE_URL:-http://health-service:8089}
+      HEALTH_INTERNAL_TOKEN: ${HEALTH_INTERNAL_TOKEN:?Set HEALTH_INTERNAL_TOKEN in production .env}
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
@@ -301,8 +307,26 @@ services:
       HEALTH_DB_USERNAME: ${HEALTH_DB_USERNAME:-health}
       HEALTH_DB_PASSWORD: ${HEALTH_DB_PASSWORD:?Set HEALTH_DB_PASSWORD in production .env}
       LLM_BASE_URL: ${LLM_BASE_URL:-http://llm-service:8084}
+      HEALTH_INTERNAL_TOKEN: ${HEALTH_INTERNAL_TOKEN:?Set HEALTH_INTERNAL_TOKEN in production .env}
     ports:
       - "${HEALTH_PUBLIC_PORT:-8089}:8089"
+
+  budget-service:
+    build:
+      context: ../../../microservices/budget
+    container_name: ${BUDGET_CONTAINER_NAME:-alice-budget-service}
+    hostname: ${BUDGET_HOSTNAME:-budget-service}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8087
+      BUDGET_DB_URL: jdbc:postgresql://postgres:5432/${BUDGET_DB_NAME:-budget}
+      BUDGET_DB_USERNAME: ${BUDGET_DB_USERNAME:-budget}
+      BUDGET_DB_PASSWORD: ${BUDGET_DB_PASSWORD:?Set BUDGET_DB_PASSWORD in production .env}
+    ports:
+      - "${BUDGET_PUBLIC_PORT:-8090}:8087"
 
 volumes:
   dashboard_data:

@@ -101,6 +101,7 @@ docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" up -d --wait pos
 docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/05-init-shopping-database.sh
 docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/06-init-knowledge-database.sh
 docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/07-init-health-database.sh
+docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/08-init-budget-database.sh
 
 echo "Aktualizacja uslug bez usuwania wolumenow"
 docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" up -d --no-build

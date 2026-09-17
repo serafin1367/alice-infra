@@ -10,6 +10,7 @@ services:
       TIME_UPSTREAM: ${ALICE_WEB_TIME_UPSTREAM:-http://time-coordinator-service:8082}
       DASHBOARD_UPSTREAM: ${ALICE_WEB_DASHBOARD_UPSTREAM:-http://dashboard-service:8088}
       SHOPPING_UPSTREAM: ${ALICE_WEB_SHOPPING_UPSTREAM:-http://shopping-service:8086}
+      BUDGET_UPSTREAM: ${ALICE_WEB_BUDGET_UPSTREAM:-http://budget-service:8087}
     ports:
       - "${ALICE_WEB_BIND_IP:-127.0.0.1}:${ALICE_WEB_PUBLIC_PORT:-19080}:80"
     healthcheck:
@@ -67,6 +68,9 @@ services:
       SHOPPING_DB_NAME: ${SHOPPING_DB_NAME:-shopping}
       SHOPPING_DB_USERNAME: ${SHOPPING_DB_USERNAME:-shopping}
       SHOPPING_DB_PASSWORD: ${SHOPPING_DB_PASSWORD:-dev-shopping}
+      BUDGET_DB_NAME: ${BUDGET_DB_NAME:-budget}
+      BUDGET_DB_USERNAME: ${BUDGET_DB_USERNAME:-budget}
+      BUDGET_DB_PASSWORD: ${BUDGET_DB_PASSWORD:-dev-budget}
     ports:
       - "${POSTGRES_PORT:-55432}:5432"
     volumes:
@@ -218,6 +222,8 @@ services:
       WEATHER_BASE_URL: http://weather-service:8081
       WORK_BASE_URL: http://work-service:8085
       TIME_COORDINATOR_BASE_URL: http://time-coordinator-service:8082
+      HEALTH_BASE_URL: http://health-service:8089
+      HEALTH_INTERNAL_TOKEN: ${HEALTH_INTERNAL_TOKEN:-alice-local-health-context}
       TELEGRAM_ENABLED: ${TELEGRAM_ENABLED:-false}
       TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN:-}"
       LLM_DB_URL: jdbc:postgresql://postgres:5432/${LLM_DB_NAME:-llm}
@@ -293,6 +299,23 @@ services:
     volumes:
       - knowledge_projects:/app/data/projects
 
+  budget-service:
+    build:
+      context: ../../../microservices/budget
+    container_name: ${BUDGET_CONTAINER_NAME:-alice-dev-budget-service}
+    hostname: ${BUDGET_HOSTNAME:-budget-service}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8087
+      BUDGET_DB_URL: jdbc:postgresql://postgres:5432/${BUDGET_DB_NAME:-budget}
+      BUDGET_DB_USERNAME: ${BUDGET_DB_USERNAME:-budget}
+      BUDGET_DB_PASSWORD: ${BUDGET_DB_PASSWORD:-dev-budget}
+    ports:
+      - "${BUDGET_PUBLIC_PORT:-19088}:8087"
+
   health-service:
     build:
       context: ../../../microservices/health
@@ -306,6 +329,8 @@ services:
       HEALTH_DB_URL: jdbc:postgresql://postgres:5432/${HEALTH_DB_NAME:-health}
       HEALTH_DB_USERNAME: ${HEALTH_DB_USERNAME:-health}
       HEALTH_DB_PASSWORD: ${HEALTH_DB_PASSWORD:-dev-health}
+      HEALTH_INTERNAL_TOKEN: ${HEALTH_INTERNAL_TOKEN:-alice-local-health-context}
+      LLM_BASE_URL: http://llm-service:8084
     ports:
       - "127.0.0.1:${HEALTH_PUBLIC_PORT:-19089}:8089"
 
