@@ -2,4 +2,4 @@
 # Cron wyśle cały log zadania (także potwierdzenie sukcesu) na wskazany adres.
 # Pozostaw ALICE_BACKUP_EMAIL puste, jeżeli nie chcesz drugiej wiadomości ze skryptu.
 MAILTO=admin@example.com
-30 2 * * * /usr/bin/flock -n /var/lock/alice-backup-cron.lock /usr/bin/bash /opt/alice/infra/environments/production/backup-production.sh 2>&1 | /usr/bin/tee -a /var/log/alice-backup.log
+30 2 * * * root /usr/bin/flock -n /var/lock/alice-backup-cron.lock /usr/bin/bash /opt/alice/infra/environments/production/backup-production.sh 2>&1 | /usr/bin/tee -a /var/log/alice-backup.log

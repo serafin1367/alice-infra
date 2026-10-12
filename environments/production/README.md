@@ -155,8 +155,11 @@ log i wysłać go przez Cron Daemon, użyj `tee`:
 
 ```cron
 MAILTO=admin@example.com
-30 2 * * * /usr/bin/flock -n /var/lock/alice-backup-cron.lock /usr/bin/bash /opt/alice/infra/environments/production/backup-production.sh 2>&1 | /usr/bin/tee -a /var/log/alice-backup.log
+30 2 * * * root /usr/bin/flock -n /var/lock/alice-backup-cron.lock /usr/bin/bash /opt/alice/infra/environments/production/backup-production.sh 2>&1 | /usr/bin/tee -a /var/log/alice-backup.log
 ```
+
+Pole `root` jest wymagane w plikach instalowanych w `/etc/cron.d/`. Nie dodaje się
+go tylko wtedy, gdy ten sam wpis jest instalowany poleceniem `crontab -e`.
 
 Po pierwszym automatycznym wykonaniu sprawdź `/var/log/alice-backup.log`, sumę SHA-256
 oraz testowo odtwórz dump w oddzielnym środowisku. Backup bez regularnego testu
