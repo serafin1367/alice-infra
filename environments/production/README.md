@@ -99,6 +99,50 @@ Domyslnie pobierana jest galaz `main`; mozna wskazac inna przez
 - Brak reverse proxy oznacza brak TLS termination na poziomie stacka. Jesli uslugi maja byc publiczne, trzeba to rozwiazac na poziomie hosta lub sieci.
 - Widoki Knowledge i Shopping są wyłącznie w Alice Web. Porty 8086 i 8087 udostępniają backendowe API.
 
+## Automatyczny backup całego środowiska
+
+Skrypt `backup-production.sh` wykonuje pełną kopię danych i konfiguracji produkcyjnej:
+
+- osobny dump każdej bazy PostgreSQL oraz role i uprawnienia,
+- dane Dashboardu,
+- pliki Knowledge oraz załączniki Mail i Work,
+- credentials i tokeny Google Calendar,
+- definicje RabbitMQ i, domyślnie, jego pełny katalog danych,
+- kod źródłowy, plik Compose i produkcyjny `.env`.
+
+Archiwum zawiera dane wrażliwe, dlatego jest tworzone z uprawnieniami wynikającymi
+z `umask 077`. Katalog backupów musi znajdować się poza katalogiem projektu, powinien
+znajdować się na szyfrowanym nośniku i być
+kopiowany poza serwer produkcyjny. Domyślny katalog to `/var/backups/alice`, a retencja
+wynosi 30 dni. Pełna kopia RabbitMQ powoduje krótką przerwę w pracy brokera; usługi
+pozostają uruchomione i ponownie nawiązują połączenie po jego automatycznym starcie.
+
+Pierwsze uruchomienie ręczne:
+
+```bash
+cd /opt/alice/infra/environments/production
+sudo /usr/bin/bash ./backup-production.sh
+```
+
+Opcjonalne ustawienia można dodać do `.env`:
+
+```dotenv
+ALICE_BACKUP_DIR=/var/backups/alice
+ALICE_BACKUP_RETENTION_DAYS=30
+ALICE_BACKUP_RABBITMQ_DATA=true
+```
+
+Przykładowy wpis crona znajduje się w `backup-cron.example`. Po dopasowaniu ścieżki
+instalacja może wyglądać tak:
+
+```bash
+sudo install -m 600 backup-cron.example /etc/cron.d/alice-backup
+```
+
+Po pierwszym automatycznym wykonaniu sprawdź `/var/log/alice-backup.log`, sumę SHA-256
+oraz testowo odtwórz dump w oddzielnym środowisku. Backup bez regularnego testu
+odtwarzania nie powinien być traktowany jako zweryfikowany.
+
 ## Minimalna weryfikacja po starcie
 
 1. `docker compose ps`

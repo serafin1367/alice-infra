@@ -1,0 +1,4 @@
+# Codziennie o 02:30. Cron uruchamiaj jako użytkownik mający dostęp do Docker Engine.
+# MAILTO można ustawić na adres administratora, aby cron wysyłał log po błędzie.
+MAILTO=root
+30 2 * * * /usr/bin/flock -n /var/lock/alice-backup-cron.lock /usr/bin/bash /opt/alice/infra/environments/production/backup-production.sh >> /var/log/alice-backup.log 2>&1
