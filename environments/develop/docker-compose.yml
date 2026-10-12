@@ -12,6 +12,7 @@ services:
       SHOPPING_UPSTREAM: ${ALICE_WEB_SHOPPING_UPSTREAM:-http://shopping-service:8086}
       BUDGET_UPSTREAM: ${ALICE_WEB_BUDGET_UPSTREAM:-http://budget-service:8087}
       MAIL_UPSTREAM: ${ALICE_WEB_MAIL_UPSTREAM:-http://mail-service:8083}
+      WEATHER_UPSTREAM: ${ALICE_WEB_WEATHER_UPSTREAM:-http://weather-service:8081}
     ports:
       - "${ALICE_WEB_BIND_IP:-127.0.0.1}:${ALICE_WEB_PUBLIC_PORT:-19080}:80"
     healthcheck:
