@@ -130,13 +130,32 @@ Opcjonalne ustawienia można dodać do `.env`:
 ALICE_BACKUP_DIR=/var/backups/alice
 ALICE_BACKUP_RETENTION_DAYS=30
 ALICE_BACKUP_RABBITMQ_DATA=true
+ALICE_BACKUP_EMAIL=admin@example.com
 ```
+
+Jeżeli `ALICE_BACKUP_EMAIL` jest ustawione, po poprawnym utworzeniu i sprawdzeniu
+archiwum skrypt wysyła wiadomość z nazwą pliku, rozmiarem i sumą SHA-256. Korzysta
+z systemowego polecenia `mail`, więc host musi mieć skonfigurowany lokalny transport
+poczty oraz pakiet `mailutils` albo `s-nail`. Błąd wysłania wiadomości jest zapisywany
+jako ostrzeżenie i nie usuwa prawidłowego backupu.
 
 Przykładowy wpis crona znajduje się w `backup-cron.example`. Po dopasowaniu ścieżki
 instalacja może wyglądać tak:
 
 ```bash
 sudo install -m 600 backup-cron.example /etc/cron.d/alice-backup
+```
+
+Jeżeli serwer ma już działającą pocztę systemową z Cron Daemon, wystarczy ustawić
+`MAILTO=adres@example.com` w pliku crona. Cron wyśle wtedy cały log skryptu, również
+końcowy komunikat o sukcesie. W takim wariancie pozostaw `ALICE_BACKUP_EMAIL` puste,
+aby nie otrzymywać dwóch wiadomości po każdym backupie. Przekierowanie wyłącznie do
+pliku (`>> ... 2>&1`) przechwytuje jednak wyjście przed cronem; aby jednocześnie zapisać
+log i wysłać go przez Cron Daemon, użyj `tee`:
+
+```cron
+MAILTO=admin@example.com
+30 2 * * * /usr/bin/flock -n /var/lock/alice-backup-cron.lock /usr/bin/bash /opt/alice/infra/environments/production/backup-production.sh 2>&1 | /usr/bin/tee -a /var/log/alice-backup.log
 ```
 
 Po pierwszym automatycznym wykonaniu sprawdź `/var/log/alice-backup.log`, sumę SHA-256

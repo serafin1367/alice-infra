@@ -36,12 +36,26 @@ POSTGRES_BOOTSTRAP_DB="${POSTGRES_BOOTSTRAP_DB:-postgres}"
 KNOWLEDGE_STORAGE_HOST_DIR="${KNOWLEDGE_STORAGE_HOST_DIR:-$(read_env_value KNOWLEDGE_STORAGE_HOST_DIR)}"
 MAIL_ATTACHMENTS_HOST_DIR="${MAIL_ATTACHMENTS_HOST_DIR:-$(read_env_value MAIL_ATTACHMENTS_HOST_DIR)}"
 WORK_ATTACHMENTS_HOST_DIR="${WORK_ATTACHMENTS_HOST_DIR:-$(read_env_value WORK_ATTACHMENTS_HOST_DIR)}"
+WEATHER_DB_NAME="${WEATHER_DB_NAME:-$(read_env_value WEATHER_DB_NAME)}"; WEATHER_DB_NAME="${WEATHER_DB_NAME:-weather}"
+TIME_COORDINATOR_DB_NAME="${TIME_COORDINATOR_DB_NAME:-$(read_env_value TIME_COORDINATOR_DB_NAME)}"; TIME_COORDINATOR_DB_NAME="${TIME_COORDINATOR_DB_NAME:-time_coordinator}"
+MAIL_DB_NAME="${MAIL_DB_NAME:-$(read_env_value MAIL_DB_NAME)}"; MAIL_DB_NAME="${MAIL_DB_NAME:-mail}"
+LLM_DB_NAME="${LLM_DB_NAME:-$(read_env_value LLM_DB_NAME)}"; LLM_DB_NAME="${LLM_DB_NAME:-llm}"
+WORK_DB_NAME="${WORK_DB_NAME:-$(read_env_value WORK_DB_NAME)}"; WORK_DB_NAME="${WORK_DB_NAME:-work}"
+SHOPPING_DB_NAME="${SHOPPING_DB_NAME:-$(read_env_value SHOPPING_DB_NAME)}"; SHOPPING_DB_NAME="${SHOPPING_DB_NAME:-shopping}"
+KNOWLEDGE_DB_NAME="${KNOWLEDGE_DB_NAME:-$(read_env_value KNOWLEDGE_DB_NAME)}"; KNOWLEDGE_DB_NAME="${KNOWLEDGE_DB_NAME:-knowledge}"
+HEALTH_DB_NAME="${HEALTH_DB_NAME:-$(read_env_value HEALTH_DB_NAME)}"; HEALTH_DB_NAME="${HEALTH_DB_NAME:-health}"
+BUDGET_DB_NAME="${BUDGET_DB_NAME:-$(read_env_value BUDGET_DB_NAME)}"; BUDGET_DB_NAME="${BUDGET_DB_NAME:-budget}"
+# Opcjonalne zmienne są eksportowane nawet jako puste, aby Docker Compose nie
+# powtarzał ostrzeżeń przy każdym wywołaniu podczas backupu.
+export MAIL_SMTP_HOST="${MAIL_SMTP_HOST:-$(read_env_value MAIL_SMTP_HOST)}"
+export MAIL_DEFAULT_FROM="${MAIL_DEFAULT_FROM:-$(read_env_value MAIL_DEFAULT_FROM)}"
 BACKUP_DIR="${1:-${ALICE_BACKUP_DIR:-$(read_env_value ALICE_BACKUP_DIR)}}"
 BACKUP_DIR="${BACKUP_DIR:-/var/backups/alice}"
 RETENTION_DAYS="${ALICE_BACKUP_RETENTION_DAYS:-$(read_env_value ALICE_BACKUP_RETENTION_DAYS)}"
 RETENTION_DAYS="${RETENTION_DAYS:-30}"
 BACKUP_RABBITMQ_DATA="${ALICE_BACKUP_RABBITMQ_DATA:-$(read_env_value ALICE_BACKUP_RABBITMQ_DATA)}"
 BACKUP_RABBITMQ_DATA="${BACKUP_RABBITMQ_DATA:-true}"
+BACKUP_EMAIL="${ALICE_BACKUP_EMAIL:-$(read_env_value ALICE_BACKUP_EMAIL)}"
 TIMESTAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 HOST_NAME="$(hostname -s 2>/dev/null || hostname)"
 ARCHIVE_NAME="alice-backup-${HOST_NAME}-${TIMESTAMP}.tar.gz"
@@ -110,8 +124,26 @@ DATABASES="$(compose exec -T postgres psql \
   --username "${POSTGRES_SUPERUSER:-postgres}" \
   --dbname "${POSTGRES_BOOTSTRAP_DB:-postgres}" \
   --command "SELECT datname FROM pg_database WHERE datallowconn AND NOT datistemplate ORDER BY datname")"
+EXPECTED_DATABASES=(
+  "${WEATHER_DB_NAME}"
+  "${TIME_COORDINATOR_DB_NAME}"
+  "${MAIL_DB_NAME}"
+  "${LLM_DB_NAME}"
+  "${WORK_DB_NAME}"
+  "${SHOPPING_DB_NAME}"
+  "${KNOWLEDGE_DB_NAME}"
+  "${HEALTH_DB_NAME}"
+  "${BUDGET_DB_NAME}"
+)
+for expected_database in "${EXPECTED_DATABASES[@]}"; do
+  if ! grep -Fqx -- "${expected_database}" <<<"${DATABASES}"; then
+    fail "Brak oczekiwanej bazy PostgreSQL '${expected_database}'. Dostępne bazy: $(tr '\n' ' ' <<<"${DATABASES}")"
+  fi
+done
 while IFS= read -r database; do
+  database="${database%$'\r'}"
   [[ -n "${database}" ]] || continue
+  [[ "${database}" =~ ^[A-Za-z0-9_.-]+$ ]] || fail "Nazwa bazy zawiera niedozwolone znaki: ${database}"
   log "  pg_dump: ${database}"
   compose exec -T postgres pg_dump \
     --format=custom \
@@ -121,7 +153,9 @@ while IFS= read -r database; do
     --username "${POSTGRES_SUPERUSER:-postgres}" \
     --dbname "${database}" \
     >"${STAGING_DIR}/postgres/${database}.dump"
+  [[ -s "${STAGING_DIR}/postgres/${database}.dump" ]] || fail "Dump bazy '${database}' jest pusty"
 done <<<"${DATABASES}"
+[[ -s "${STAGING_DIR}/postgres/globals.sql" ]] || fail "Eksport ról PostgreSQL jest pusty"
 
 copy_host_path() {
   local configured_path="$1" destination_name="$2" source_path
@@ -209,3 +243,25 @@ find "${BACKUP_DIR}" -maxdepth 1 -type f \
 
 ARCHIVE_SIZE="$(du -h "${ARCHIVE_PATH}" | awk '{print $1}')"
 log "Backup zakończony: ${ARCHIVE_PATH} (${ARCHIVE_SIZE})"
+
+if [[ -n "${BACKUP_EMAIL}" ]]; then
+  if command -v mail >/dev/null; then
+    CHECKSUM="$(awk '{print $1}' "${ARCHIVE_PATH}.sha256")"
+    if printf '%s\n' \
+      "Backup Alice zakończył się pomyślnie." \
+      "" \
+      "Host: ${HOST_NAME}" \
+      "Czas UTC: ${TIMESTAMP}" \
+      "Archiwum: ${ARCHIVE_PATH}" \
+      "Rozmiar: ${ARCHIVE_SIZE}" \
+      "SHA-256: ${CHECKSUM}" \
+      "Retencja: ${RETENTION_DAYS} dni" \
+      | mail -s "[Alice] Backup zakończony pomyślnie — ${HOST_NAME}" "${BACKUP_EMAIL}"; then
+      log "Wysłano potwierdzenie backupu na ${BACKUP_EMAIL}"
+    else
+      log "WARN: Backup jest poprawny, ale nie udało się wysłać e-maila na ${BACKUP_EMAIL}"
+    fi
+  else
+    log "WARN: Backup jest poprawny, ale nie znaleziono polecenia 'mail'; zainstaluj mailutils lub s-nail"
+  fi
+fi
