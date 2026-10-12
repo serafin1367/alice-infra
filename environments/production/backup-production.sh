@@ -152,10 +152,13 @@ while IFS= read -r database; do
     --no-privileges \
     --username "${POSTGRES_SUPERUSER:-postgres}" \
     --dbname "${database}" \
-    >"${STAGING_DIR}/postgres/${database}.dump"
+    </dev/null >"${STAGING_DIR}/postgres/${database}.dump"
   [[ -s "${STAGING_DIR}/postgres/${database}.dump" ]] || fail "Dump bazy '${database}' jest pusty"
 done <<<"${DATABASES}"
 [[ -s "${STAGING_DIR}/postgres/globals.sql" ]] || fail "Eksport ról PostgreSQL jest pusty"
+for expected_database in "${EXPECTED_DATABASES[@]}"; do
+  [[ -s "${STAGING_DIR}/postgres/${expected_database}.dump" ]] || fail "Brak poprawnego dumpu oczekiwanej bazy '${expected_database}'"
+done
 
 copy_host_path() {
   local configured_path="$1" destination_name="$2" source_path
