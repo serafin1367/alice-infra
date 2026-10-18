@@ -54,7 +54,7 @@ docker compose --env-file .env down
 - Work API: `19085`
 - Shopping API: `19086`
 - Shopping (API i PWA): `19086`
-- MailHog SMTP: `11025`
+- MailHog SMTP: `11125`
 - MailHog UI: `19025`
 
 ## OAuth w develop

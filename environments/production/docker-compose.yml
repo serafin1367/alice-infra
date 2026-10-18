@@ -14,6 +14,7 @@ services:
       HEALTH_UPSTREAM: ${ALICE_WEB_HEALTH_UPSTREAM:-http://health-service:8089}
       MAIL_UPSTREAM: ${ALICE_WEB_MAIL_UPSTREAM:-http://mail-service:8083}
       WEATHER_UPSTREAM: ${ALICE_WEB_WEATHER_UPSTREAM:-http://weather-service:8081}
+      LLM_UPSTREAM: ${ALICE_WEB_LLM_UPSTREAM:-http://llm-service:8084}
     ports:
       - "${ALICE_WEB_BIND_IP:-127.0.0.1}:${ALICE_WEB_PUBLIC_PORT:-8080}:80"
     healthcheck:
