@@ -8,6 +8,7 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE_DIR="$(cd -- "$SCRIPT_DIR/../../.." && pwd)"
 COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
+COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-production}"
 BRANCH="${DEPLOY_BRANCH:-main}"
 source "$SCRIPT_DIR/repository-functions.sh"
 
@@ -102,20 +103,20 @@ for repository in "${OPTIONAL_REPOSITORIES[@]}"; do
 done
 
 echo "Walidacja konfiguracji Docker Compose"
-docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" config -q
+docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" config -q
 
 echo "Budowanie obrazow przed zmiana dzialajacych uslug"
-docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" build
+docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" build
 
 echo "Uruchomienie infrastruktury i uzupelnienie brakujacych baz"
-docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" up -d --wait postgres rabbitmq
-docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/05-init-shopping-database.sh
-docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/06-init-knowledge-database.sh
-docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/07-init-health-database.sh
-docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/08-init-budget-database.sh
+docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" up -d --wait postgres rabbitmq
+docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/05-init-shopping-database.sh
+docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/06-init-knowledge-database.sh
+docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/07-init-health-database.sh
+docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/08-init-budget-database.sh
 
 echo "Aktualizacja uslug bez usuwania wolumenow"
-docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" up -d --no-build
+docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" up -d --no-build
 
 echo "Aktualny stan kontenerow"
-docker compose --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" ps
+docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" ps
