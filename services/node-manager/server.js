@@ -142,7 +142,7 @@ const server = http.createServer((req, res) => {
     const items = [...nodes.values()].map(view).sort((a, b) => a.nodeId.localeCompare(b.nodeId));
     return respond(200, { nodes: items, total: items.length, online: items.filter(n => n.status === 'ONLINE').length, rabbitmqConnected: connected });
   }
-  const systemMatch = pathname.match(/^\\/api\\/nodes\\/([^/]+)\\/system-info$/);
+  const systemMatch = pathname.match(/^\/api\/nodes\/([^/]+)\/system-info$/);
   if (systemMatch) {
     let id;
     try { id = decodeURIComponent(systemMatch[1]); } catch { return respond(400, { message: 'Invalid node ID' }); }
