@@ -112,7 +112,7 @@ services:
 
   media-service:
     build:
-      context: ../../../alice-microservices-media
+      context: ../../../microservices/media
     container_name: ${MEDIA_CONTAINER_NAME:-alice-dev-media-service}
     hostname: media-service
     restart: unless-stopped
