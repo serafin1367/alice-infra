@@ -38,8 +38,12 @@ function heartbeatReceived(hb) {
 }
 
 async function connectForever() {
-  const url = process.env.RABBITMQ_URL;
-  if (!url) throw new Error('RABBITMQ_URL is required');
+  const url = process.env.RABBITMQ_URL || ('amqp://' +
+    encodeURIComponent(process.env.RABBITMQ_USERNAME || 'guest') + ':' +
+    encodeURIComponent(process.env.RABBITMQ_PASSWORD || 'guest') + '@' +
+    (process.env.RABBITMQ_HOST || 'rabbitmq') + ':' +
+    (process.env.RABBITMQ_PORT || '5672') + '/' +
+    encodeURIComponent(process.env.RABBITMQ_VHOST || 'alice'));
   for (;;) {
     try {
       const connection = await amqp.connect(url);
