@@ -70,3 +70,30 @@ Ten adres musi byc dodany do dozwolonych redirect URI w projekcie Google OAuth d
 ## Alice Web
 
 Serwis `alice-web` udostępnia stronę startową oraz moduły Knowledge i Shopping pod http://localhost:19080/. Uruchomienie: `docker compose up -d --build --no-deps alice-web`. Wymaga działających backendów dla funkcji modułów, lecz samą stronę startową można uruchomić niezależnie. Domyślne powiązanie portu to `127.0.0.1`; ustawienia dostępu LAN i plan publikacji internetowej opisuje `../../../alice-web/README.md`.
+
+## Alice Media – integracja developerska
+
+Repozytorium `alice-microservices-media` powinno znajdować się obok `alice-infra` i `alice-web`. Ścieżka budowania jest relatywna do `environments/develop/docker-compose.yml`: `../../../alice-microservices-media`.
+
+Konfiguracja współdzieli istniejące usługi `postgres` i `rabbitmq`; **nie uruchamiaj osobnego `docker-compose.yml` z repozytorium Media**, jeśli korzystasz z tego stacku. Ustaw `MEDIA_DB_PASSWORD` w prywatnym `.env` i zachowaj spójność z hasłem użytkownika PostgreSQL.
+
+**Ważne przy istniejącym wolumenie PostgreSQL:** skrypty w `postgres/init` działają wyłącznie przy pierwszej inicjalizacji pustego katalogu danych. Dodanie `08-init-media-database.sh` NIE tworzy bazy w już uruchomionym PostgreSQL. Nie usuwaj wolumenu danych, aby wymusić inicjalizację! Zamiast tego, wykonaj poniższy skrypt w istniejącym kontenerze, po skonfigurowaniu `.env`:
+
+```powershell
+# W katalogu alice-infra/environments/develop
+# Uruchomienie jawne: skrypt tworzy rolę i bazę, jeśli nie istnieją.
+docker compose --env-file .env exec -T postgres bash /docker-entrypoint-initdb.d/08-init-media-database.sh
+```
+
+Następnie:
+
+```powershell
+docker compose --env-file .env config --quiet
+docker compose --env-file .env up -d --build media-service alice-web
+docker compose --env-file .env ps media-service alice-web
+curl.exe http://127.0.0.1:19096/api/media/health
+```
+
+Frontend: `http://localhost:19080/media/`. API z Alice Web: `http://localhost:19080/api/media/health`. Lokalny port Media Service: `127.0.0.1:19096`.
+
+**Uwaga bezpieczeństwa**: bieżące Media API nie ma kompletnej autoryzacji; środowisko nie nadaje się do publicznego wystawienia. Ruch RabbitMQ używany do transmisji danych plików wymaga osobnych testów wydajnościowych.
