@@ -16,6 +16,7 @@ services:
       LLM_UPSTREAM: ${ALICE_WEB_LLM_UPSTREAM:-http://llm-service:8084}
       SMARTHOME_UPSTREAM: ${ALICE_WEB_SMARTHOME_UPSTREAM:-http://smarthome-service:8091}
       MEDIA_UPSTREAM: ${ALICE_WEB_MEDIA_UPSTREAM:-http://media-service:8096}
+      NODES_UPSTREAM: ${ALICE_WEB_NODES_UPSTREAM:-http://node-manager-service:8097}
     ports:
       - "${ALICE_WEB_BIND_IP:-127.0.0.1}:${ALICE_WEB_PUBLIC_PORT:-19080}:80"
     healthcheck:
@@ -109,6 +110,28 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+
+  node-manager-service:
+    build:
+      context: ../../services/node-manager
+    container_name: alice-dev-node-manager
+    restart: unless-stopped
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      PORT: 8097
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      RABBITMQ_VHOST: ${RABBITMQ_VHOST:-alice}
+      NODE_OFFLINE_SECONDS: 90
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8097/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   media-service:
     build:
