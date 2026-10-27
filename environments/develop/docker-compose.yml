@@ -15,6 +15,7 @@ services:
       WEATHER_UPSTREAM: ${ALICE_WEB_WEATHER_UPSTREAM:-http://weather-service:8081}
       LLM_UPSTREAM: ${ALICE_WEB_LLM_UPSTREAM:-http://llm-service:8084}
       SMARTHOME_UPSTREAM: ${ALICE_WEB_SMARTHOME_UPSTREAM:-http://smarthome-service:8091}
+      MEDIA_UPSTREAM: ${ALICE_WEB_MEDIA_UPSTREAM:-http://media-service:8096}
     ports:
       - "${ALICE_WEB_BIND_IP:-127.0.0.1}:${ALICE_WEB_PUBLIC_PORT:-19080}:80"
     healthcheck:
@@ -72,6 +73,9 @@ services:
       SHOPPING_DB_NAME: ${SHOPPING_DB_NAME:-shopping}
       SHOPPING_DB_USERNAME: ${SHOPPING_DB_USERNAME:-shopping}
       SHOPPING_DB_PASSWORD: ${SHOPPING_DB_PASSWORD:-dev-shopping}
+      MEDIA_DB_NAME: ${MEDIA_DB_NAME:-media}
+      MEDIA_DB_USERNAME: ${MEDIA_DB_USERNAME:-media}
+      MEDIA_DB_PASSWORD: ${MEDIA_DB_PASSWORD:-dev-media}
       BUDGET_DB_NAME: ${BUDGET_DB_NAME:-budget}
       BUDGET_DB_USERNAME: ${BUDGET_DB_USERNAME:-budget}
       BUDGET_DB_PASSWORD: ${BUDGET_DB_PASSWORD:-dev-budget}
@@ -105,6 +109,30 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+
+  media-service:
+    build:
+      context: ../../../alice-microservices-media
+    container_name: ${MEDIA_CONTAINER_NAME:-alice-dev-media-service}
+    hostname: media-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8096
+      DB_URL: jdbc:postgresql://postgres:5432/${MEDIA_DB_NAME:-media}
+      DB_USER: ${MEDIA_DB_USERNAME:-media}
+      DB_PASSWORD: ${MEDIA_DB_PASSWORD:-dev-media}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      RABBITMQ_VHOST: ${RABBITMQ_VHOST:-alice}
+    ports:
+      - "127.0.0.1:${MEDIA_PUBLIC_PORT:-19096}:8096"
 
   weather-service:
     build:
