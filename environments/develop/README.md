@@ -73,7 +73,7 @@ Serwis `alice-web` udostępnia stronę startową oraz moduły Knowledge i Shoppi
 
 ## Alice Media – integracja developerska
 
-Repozytorium `alice-microservices-media` powinno znajdować się obok `alice-infra` i `alice-web`. Ścieżka budowania jest relatywna do `environments/develop/docker-compose.yml`: `../../../alice-microservices-media`.
+Kod repozytorium `alice-microservices-media` powinien znajdowac sie w katalogu `microservices/media` obok innych mikroserwisow Alice. Sciezka budowania relatywna do `environments/develop/docker-compose.yml`: `../../../microservices/media`.
 
 Konfiguracja współdzieli istniejące usługi `postgres` i `rabbitmq`; **nie uruchamiaj osobnego `docker-compose.yml` z repozytorium Media**, jeśli korzystasz z tego stacku. Ustaw `MEDIA_DB_PASSWORD` w prywatnym `.env` i zachowaj spójność z hasłem użytkownika PostgreSQL.
 
