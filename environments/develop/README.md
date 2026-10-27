@@ -97,3 +97,14 @@ curl.exe http://127.0.0.1:19096/api/media/health
 Frontend: `http://localhost:19080/media/`. API z Alice Web: `http://localhost:19080/api/media/health`. Lokalny port Media Service: `127.0.0.1:19096`.
 
 **Uwaga bezpieczeństwa**: bieżące Media API nie ma kompletnej autoryzacji; środowisko nie nadaje się do publicznego wystawienia. Ruch RabbitMQ używany do transmisji danych plików wymaga osobnych testów wydajnościowych.
+
+## Skrypty przebudowy
+
+Z katalogu `environments/develop` (PowerShell):
+
+```powershell
+./rebuild-media.ps1  # przebudowuje alice-web i media-service, bez uruchamiania zaleznosci
+./rebuild-all.ps1    # przebudowuje wszystkie obrazy ze zbiorczej listy, w tym media-service
+```
+
+`rebuild-media.ps1` uzywa `--no-deps`, wiec PostgreSQL i RabbitMQ musza juz dzialac, a baza `media` musi istniec. Skrypt nie usuwa wolumenow ani baz danych. Logi sa wyswietlane po odtworzeniu kontenerow; `Ctrl+C` konczy sledzenie logow.
