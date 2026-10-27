@@ -30,8 +30,9 @@ $buildServices = @(
     "work-service",
     "shopping-service",
     "knowledge-service",
-    "health-service"
-    "budget-service"
+    "health-service",
+    "budget-service",
+    "media-service"
 )
 
 Write-Host "Buduje wszystkie obrazy uslug od nowa, bez cache..." -ForegroundColor Cyan
@@ -59,4 +60,4 @@ if ($LASTEXITCODE -ne 0) {
     throw "Nie udalo sie odczytac stanu kontenerow (kod $LASTEXITCODE)."
 }
 
-& docker compose logs -f
+& docker @composeBaseArguments logs -f
