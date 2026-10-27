@@ -15,6 +15,7 @@ services:
       MAIL_UPSTREAM: ${ALICE_WEB_MAIL_UPSTREAM:-http://mail-service:8083}
       WEATHER_UPSTREAM: ${ALICE_WEB_WEATHER_UPSTREAM:-http://weather-service:8081}
       LLM_UPSTREAM: ${ALICE_WEB_LLM_UPSTREAM:-http://llm-service:8084}
+      SMARTHOME_UPSTREAM: ${ALICE_WEB_SMARTHOME_UPSTREAM:-http://smarthome-service:8091}
     ports:
       - "${ALICE_WEB_BIND_IP:-127.0.0.1}:${ALICE_WEB_PUBLIC_PORT:-8080}:80"
     healthcheck:
@@ -217,6 +218,7 @@ services:
       WORK_BASE_URL: ${WORK_BASE_URL:-http://work-service:8085}
       TIME_COORDINATOR_BASE_URL: ${TIME_COORDINATOR_BASE_URL:-http://time-coordinator-service:8082}
       HEALTH_BASE_URL: ${HEALTH_BASE_URL:-http://health-service:8089}
+      APP_SMARTHOME_BASE_URL: ${SMARTHOME_BASE_URL:-http://smarthome-service:8091}
       HEALTH_INTERNAL_TOKEN: ${HEALTH_INTERNAL_TOKEN:?Set HEALTH_INTERNAL_TOKEN in production .env}
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
@@ -332,7 +334,29 @@ services:
     ports:
       - "${BUDGET_PUBLIC_PORT:-8090}:8087"
 
+  smarthome-service:
+    build:
+      context: ../../../microservices/smarthome
+    container_name: ${SMARTHOME_CONTAINER_NAME:-alice-smarthome-service}
+    hostname: ${SMARTHOME_HOSTNAME:-smarthome-service}
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8091
+      HOME_ASSISTANT_URL: ${HOME_ASSISTANT_URL:?Set HOME_ASSISTANT_URL in production .env}
+      HOME_ASSISTANT_TOKEN: ${HOME_ASSISTANT_TOKEN:?Set HOME_ASSISTANT_TOKEN in production .env}
+      HOME_ASSISTANT_TIMEOUT_MS: ${HOME_ASSISTANT_TIMEOUT_MS:-8000}
+      SMARTHOME_DATA_DIR: /data
+    volumes:
+      - smarthome_data:/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8091/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
 volumes:
   dashboard_data:
   postgres_data:
   rabbitmq_data:
+  smarthome_data:

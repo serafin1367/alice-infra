@@ -8,6 +8,7 @@ Ta lista sluzy do pierwszego uruchomienia stacka produkcyjnego:
 - `mail-service`
 - `llm-service`
 - `work-service`
+- `smarthome-service`
 
 ## 1. Przygotowanie hosta
 
@@ -28,6 +29,7 @@ Ta lista sluzy do pierwszego uruchomienia stacka produkcyjnego:
 - skopiowano `.env.example` do `.env`
 - ustawiono mocne hasla w `.env`
 - ustawiono `HEALTH_INTERNAL_TOKEN` albo pozostawiono jego wygenerowanie skryptowi `deploy-production.sh`
+- ustawiono `HOME_ASSISTANT_URL` i długoterminowy `HOME_ASSISTANT_TOKEN`; `.env` ma uprawnienia `600`
 - dopasowano porty hosta w `.env`, jesli domyslne sa zajete
 - dodano plik:
   - `secrets/google-calendar/credentials.json`
@@ -66,6 +68,7 @@ Oczekiwany stan:
 - `llm-service` - `running`
 - `work-service` - `running`
 - `health-service` - `running`
+- `smarthome-service` - `healthy`
 
 ## 6. Weryfikacja logow
 
@@ -77,6 +80,7 @@ docker compose logs time-coordinator-service --tail=100
 docker compose logs mail-service --tail=100
 docker compose logs llm-service --tail=100
 docker compose logs work-service --tail=100
+docker compose logs smarthome-service --tail=100
 ```
 
 Sprawdz:
@@ -84,6 +88,7 @@ Sprawdz:
 - brak bledow polaczenia z baza
 - brak bledow RabbitMQ
 - brak bledow Flyway
+- brak błędów połączenia Smart Home z Home Assistant
 
 ## 7. Weryfikacja baz danych
 
@@ -132,6 +137,13 @@ Sprawdz:
 
 Jesli sa endpointy health, sprawdz je w pierwszej kolejnosci.
 
+Smart Home sprawdź przez lokalnie wystawione Alice Web (backend nie publikuje portu):
+
+```bash
+curl -fsS http://127.0.0.1:8080/api/smarthome/status
+docker compose exec -T smarthome-service node -e "fetch('http://127.0.0.1:8091/health').then(async r => { console.log(await r.text()); process.exit(r.ok ? 0 : 1) }).catch(() => process.exit(1))"
+```
+
 ## 10. Weryfikacja Google Calendar
 
 - konto domyslne jest widoczne w API / desktopie
@@ -142,7 +154,7 @@ Jesli sa endpointy health, sprawdz je w pierwszej kolejnosci.
 
 ## 11. Po starcie
 
-- wykonaj pierwszy backup wolumenu Postgresa albo dump wszystkich baz
+- wykonaj pierwszy `backup-production.sh` i potwierdź, że archiwum zawiera `docker/smarthome-data`
 - zapisz finalne uzyte porty i hasla w menedzerze sekretow
 - ogranicz dostep do `15672` firewallem
 - jesli `5672` nie jest potrzebny z zewnatrz, zamknij go na firewallu

@@ -190,6 +190,16 @@ else
   fail "Kontener dashboard-service nie działa"
 fi
 
+log "Kopiowanie danych Smart Home"
+SMARTHOME_ID="$(compose ps -q smarthome-service)"
+if [[ -n "${SMARTHOME_ID}" ]]; then
+  mkdir -p "${STAGING_DIR}/docker/smarthome-data"
+  docker cp "${SMARTHOME_ID}:/data/." "${STAGING_DIR}/docker/smarthome-data/"
+  [[ -d "${STAGING_DIR}/docker/smarthome-data" ]] || fail "Nie udało się utworzyć kopii wolumenu smarthome_data"
+else
+  fail "Kontener smarthome-service nie działa"
+fi
+
 RABBITMQ_ID="$(compose ps -q rabbitmq)"
 [[ -n "${RABBITMQ_ID}" ]] || fail "Kontener RabbitMQ nie działa"
 log "Eksport definicji RabbitMQ"
@@ -234,6 +244,8 @@ log "Tworzenie archiwum końcowego"
 tar -C "${STAGING_DIR}" -czf "${ARCHIVE_PATH}" .
 gzip -t "${ARCHIVE_PATH}"
 tar -tzf "${ARCHIVE_PATH}" >/dev/null
+tar -tzf "${ARCHIVE_PATH}" | grep -Eq '^\./docker/smarthome-data(/|$)' \
+  || fail "Archiwum nie zawiera kopii wolumenu smarthome_data"
 (
   cd -- "${BACKUP_DIR}"
   sha256sum "${ARCHIVE_NAME}" >"${ARCHIVE_NAME}.sha256"

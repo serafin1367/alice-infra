@@ -12,6 +12,7 @@ Ten katalog zawiera docelowy runtime produkcyjny z aplikacją Alice Web i jej br
 - `knowledge-service`
 - `health-service`
 - `budget-service`
+- `smarthome-service`
 
 ## Struktura
 
@@ -46,6 +47,9 @@ Ten katalog zawiera docelowy runtime produkcyjny z aplikacją Alice Web i jej br
 `HEALTH_INTERNAL_TOKEN` musi byc dlugim losowym sekretem wspoldzielonym przez Health i LLM.
 Skrypt `deploy-production.sh` automatycznie generuje i zapisuje brakujaca wartosc w
 produkcyjnym `.env`, dzieki czemu aktualizacja starszej instalacji nie zatrzymuje sie na walidacji Compose.
+Ustaw także `HOME_ASSISTANT_URL` oraz długoterminowy `HOME_ASSISTANT_TOKEN`. Plik `.env`
+ma zawierać sekret i nie może trafić do repozytorium. Smart Home nie publikuje portu na
+hoście; Alice Web i LLM łączą się z nim przez prywatną sieć Compose.
 3. Dopasuj porty hosta, jesli domyslne sa zajete.
 4. Umiesc plik Google OAuth credentials w:
 - `secrets/google-calendar/credentials.json`
@@ -105,6 +109,7 @@ Skrypt `backup-production.sh` wykonuje pełną kopię danych i konfiguracji prod
 
 - osobny dump każdej bazy PostgreSQL oraz role i uprawnienia,
 - dane Dashboardu,
+- pliki konfiguracji Smart Home z wolumenu `smarthome_data`,
 - pliki Knowledge oraz załączniki Mail i Work,
 - credentials i tokeny Google Calendar,
 - definicje RabbitMQ i, domyślnie, jego pełny katalog danych,
@@ -179,14 +184,19 @@ odtwarzania nie powinien być traktowany jako zweryfikowany.
 
 ## Wdrożenie Alice Web i Knowledge
 
-Repozytoria wymagane na serwerze: infra, alice-web oraz microservices/llm, mail, shopping, knowledge, time_coordinator, weather, work, dashboard i health. Desktop jest opcjonalny. Skrypt wdrożeniowy automatycznie klonuje także Health i uruchamia jego migracje Flyway.
+Repozytoria wymagane na serwerze: infra, alice-web oraz microservices/llm, mail, shopping, knowledge, time_coordinator, weather, work, dashboard, health, budget i smarthome. Desktop jest opcjonalny. Skrypt wdrożeniowy automatycznie klonuje brakujące repozytoria i uruchamia migracje usług bazodanowych.
 
-1. Pobierz aktualne repozytorium infra. Skrypt automatycznie sklonuje brakujące wymagane repozytoria, w tym Alice Web i Knowledge. Adres Knowledge: `http://gitlab.mbb.net.pl/alice/microservices/knowledge.git`.
-2. Uzupełnij produkcyjne `.env`: `KNOWLEDGE_DB_NAME`, `KNOWLEDGE_DB_USERNAME`, `KNOWLEDGE_DB_PASSWORD`, `KNOWLEDGE_STORAGE_HOST_DIR`, `HEALTH_DB_NAME`, `HEALTH_DB_USERNAME`, `HEALTH_DB_PASSWORD`, `ALICE_WEB_PUBLIC_PORT` (domyślnie 8080), `ALICE_WEB_BIND_IP` (domyślnie 127.0.0.1). Hasła muszą odpowiadać istniejącym rolom bazy; skrypty nie resetują istniejących haseł.
+1. Pobierz aktualne repozytorium infra. Skrypt automatycznie sklonuje brakujące wymagane repozytoria, w tym Alice Web, Knowledge i Smart Home. Adres Smart Home: `http://gitlab.mbb.net.pl/alice/microservices/smarthome.git`.
+2. Uzupełnij produkcyjne `.env`: `KNOWLEDGE_DB_NAME`, `KNOWLEDGE_DB_USERNAME`, `KNOWLEDGE_DB_PASSWORD`, `KNOWLEDGE_STORAGE_HOST_DIR`, `HEALTH_DB_NAME`, `HEALTH_DB_USERNAME`, `HEALTH_DB_PASSWORD`, `HOME_ASSISTANT_URL`, `HOME_ASSISTANT_TOKEN`, `ALICE_WEB_PUBLIC_PORT` (domyślnie 8080), `ALICE_WEB_BIND_IP` (domyślnie 127.0.0.1). Hasła muszą odpowiadać istniejącym rolom bazy; skrypty nie resetują istniejących haseł.
 3. Wykonaj backup bazy PostgreSQL i katalogów danych przed aktualizacją. Skrypt nie kopiuje danych developerskich na produkcję. Istniejące dane produkcyjne pozostają w swoich wolumenach/katalogach.
 4. Pobierz aktualizację infra, następnie uruchom `bash deploy-production.sh`. Skrypt wymaga wskazanej gałęzi, wykonuje tylko merge fast-forward, buduje wszystkie obrazy przed zmianą działających usług, uruchamia infrastrukturę i tworzy brakujące bazy Shopping, Knowledge i Health także na istniejącym wolumenie. Na koniec odtwarza zmienione kontenery bez `down` i bez kasowania wolumenów.
 5. Zweryfikuj `docker compose ps` i logi migracji. Alice Web jest lokalnie dostępne na serwerze pod `http://127.0.0.1:8080/` (w tym `/knowledge/` i `/shopping/`).
 6. W produkcyjnym LLM skonfiguruj profil z przeznaczeniem `KNOWLEDGE`. Profil developerski nie jest automatycznie przenoszony. Powinien obsługiwać JSON z `message` i `actions` dla propozycji zmian; dane dostawcy/modelu pozostają w produkcyjnej konfiguracji LLM.
+
+Smart Home nie używa PostgreSQL. Ustawienia, geometria, urządzenia i wyposażenie są
+zapisywane w `/data` na nazwanym wolumenie `smarthome_data`; wdrożenie nie usuwa tego
+wolumenu, a `backup-production.sh` kopiuje go do `docker/smarthome-data` i sprawdza
+obecność tej kopii w końcowym archiwum.
 
 Domyślny binding Alice Web pozostaje lokalny. Dostęp z internetu wymaga HTTPS i uwierzytelniania obejmującego stronę, API i WebSocket. Nie publikuj bezpośrednio niechronionych API; istniejące porty developerskie/administracyjne backendów należy ograniczyć zaporą lub bindingiem hosta. Aktualizacja nie otwiera routera i nie konfiguruje domeny.
 ## Automatyczne klonowanie
