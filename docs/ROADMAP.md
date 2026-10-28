@@ -59,3 +59,7 @@ Etap uznajemy za zrealizowany dopiero po spełnieniu odpowiednich kryteriów:
 To dokument orientacyjny. Konkretne zadania powinny być rozpisywane jako Issues z właścicielem, priorytetem, akceptacją i powiązanym PR. Aktualizuj stan etapów po weryfikacji, a nie tylko po dopisaniu funkcji do README.
 
 [Powrót do katalogu komponentów](PROJECT_OVERVIEW.md).
+
+## Śledzenie prac w GitHub Issues
+
+[Centralny indeks etapów i zadań wykonawczych](ISSUES.md) zawiera odnośniki do 9 etapów w `alice-infra` i 17 Issues w repozytoriach komponentów. Status realizacji należy sprawdzać w GitHub Issues, a nie ręcznie w tej roadmapie.
