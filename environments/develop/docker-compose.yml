@@ -113,7 +113,7 @@ services:
 
   node-manager-service:
     build:
-      context: ../../services/node-manager
+      context: ../../../alice-node-manager
     container_name: alice-dev-node-manager
     restart: unless-stopped
     depends_on:
