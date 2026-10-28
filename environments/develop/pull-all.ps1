@@ -69,7 +69,7 @@ foreach ($repoPath in ($repositories | Sort-Object)) {
 
     $before = (& git -C $repoPath rev-parse HEAD).Trim()
     Write-Host "Galaz: $branch, upstream: $upstream"
-    & git -C $repoPath pull --ff-only
+    & git -C $repoPath pull github main --ff-only
     if ($LASTEXITCODE -ne 0) {
         Write-Warning "Pull nie powiodl sie. Sprawdz komunikat Git powyzej."
         $failed++

@@ -113,7 +113,7 @@ services:
 
   node-manager-service:
     build:
-      context: ../../../alice-node-manager
+      context: ../../../microservices/node-manager
     container_name: alice-dev-node-manager
     restart: unless-stopped
     depends_on:
@@ -154,6 +154,7 @@ services:
       RABBITMQ_USER: ${RABBITMQ_USERNAME}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       RABBITMQ_VHOST: ${RABBITMQ_VHOST:-alice}
+      ALICE_ANILIST_ENABLED: "true"
     ports:
       - "127.0.0.1:${MEDIA_PUBLIC_PORT:-19096}:8096"
 
