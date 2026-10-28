@@ -1,35 +1,35 @@
 # ALICE Infra
 
-This repository is for shared infrastructure and environment-level runtime concerns across the ALICE system.
+Repozytorium przeznaczone do zarządzania współdzieloną infrastrukturą oraz konfiguracją środowisk uruchomieniowych całego systemu ALICE.
 
-It is not a microservice repository. Service application code belongs in `ALICE/microservices/*`.
+Nie jest to repozytorium mikroserwisu. Kod źródłowy poszczególnych usług powinien znajdować się w `ALICE/microservices/*`.
 
-## Scope
+## Zakres odpowiedzialności
 
-Use this repository for:
-- shared components such as RabbitMQ, reverse proxy, monitoring, and other common runtime services
-- environment topology and host grouping
-- shared configuration examples
-- operational documentation
+Repozytorium służy do przechowywania i zarządzania:
 
-Do not put service source code here.
+- Współdzielonymi komponentami infrastruktury, takimi jak RabbitMQ, reverse proxy, monitoring oraz inne wspólne usługi uruchomieniowe.
+- Topologią środowisk oraz podziałem i grupowaniem hostów.
+- Przykładowymi konfiguracjami współdzielonymi przez różne usługi.
+- Dokumentacją operacyjną dotyczącą infrastruktury i jej utrzymania.
 
-## Initial structure
+**Nie należy umieszczać w tym repozytorium kodu źródłowego mikroserwisów.**
 
-- `services/`
-  shared infrastructure components
-- `environments/`
-  environment and host layout
-- `docs/`
-  operational notes and architecture decisions
+## Początkowa struktura katalogów
 
-## Current direction
+- `services/` – współdzielone komponenty infrastruktury.
+- `environments/` – definicje środowisk oraz rozmieszczenie hostów.
+- `docs/` – dokumentacja operacyjna, notatki techniczne oraz decyzje architektoniczne.
 
-At this stage the repository is intentionally lightweight. The first shared component planned here is RabbitMQ, because it is used across multiple ALICE services and should not belong to a single microservice repository.
+## Aktualny kierunek rozwoju
 
-## Next steps
+Na obecnym etapie repozytorium celowo zachowuje minimalistyczną strukturę.
 
-1. Define host layout for local, stage, and production environments.
-2. Add shared RabbitMQ runtime configuration.
-3. Add service-to-host mapping documentation.
-4. Move environment-specific deployment assets out of service repositories.
+Pierwszym planowanym komponentem współdzielonej infrastruktury jest **RabbitMQ**, ponieważ korzysta z niego wiele mikroserwisów ALICE i nie powinien być przypisany do repozytorium pojedynczej usługi.
+
+## Kolejne kroki
+
+1. Zdefiniować rozmieszczenie hostów dla środowisk lokalnego, testowego (stage) oraz produkcyjnego.
+2. Dodać konfigurację uruchomieniową współdzielonego RabbitMQ.
+3. Przygotować dokumentację przypisania poszczególnych usług do hostów.
+4. Przenieść zasoby wdrożeniowe specyficzne dla poszczególnych środowisk z repozytoriów mikroserwisów do repozytorium infrastruktury.
