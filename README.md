@@ -5,7 +5,7 @@
 **AliceAI** to modularna platforma osobistego asystenta: interfejs WWW, aplikacja desktopowa i rozszerzenie przeglądarki korzystają z niezależnych mikroserwisów, lokalnych modeli LLM oraz integracji z urządzeniami i usługami zewnętrznymi. Projekt obejmuje wiedzę, pocztę, kalendarz, pogodę, finanse, zdrowie, zakupy, media, SmartHome oraz zdalne węzły wykonawcze. **Alice Infra** zapewnia wspólną warstwę infrastrukturalną i dokumentację środowisk.
 
 - **[Opis całego projektu i architektury](docs/PROJECT_OVERVIEW.md)** — role aplikacji, katalog wszystkich 17 repozytoriów, scenariusze integracyjne i zasady architektoniczne.
-- **[Poglądowa roadmapa AliceAI](docs/ROADMAP.md)** — kolejność prac R0–R8, zadania dla usług, zależności i kryteria ukończenia.
+- **[Centralna roadmapa GitHub Issues](docs/ISSUES.md)** — etapy R0–R8, zadania mikroserwisów i dynamiczne wyszukiwanie statusów.- **[Poglądowa roadmapa AliceAI](docs/ROADMAP.md) — kolejność prac R0–R8, zadania dla usług, zależności i kryteria ukończenia.
 
 ### Przegląd obszarów
 
