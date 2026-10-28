@@ -1,5 +1,26 @@
 # ALICE Infra
 
+## AliceAI — cały ekosystem
+
+**AliceAI** to modularna platforma osobistego asystenta: interfejs WWW, aplikacja desktopowa i rozszerzenie przeglądarki korzystają z niezależnych mikroserwisów, lokalnych modeli LLM oraz integracji z urządzeniami i usługami zewnętrznymi. Projekt obejmuje wiedzę, pocztę, kalendarz, pogodę, finanse, zdrowie, zakupy, media, SmartHome oraz zdalne węzły wykonawcze. **Alice Infra** zapewnia wspólną warstwę infrastrukturalną i dokumentację środowisk.
+
+- **[Opis całego projektu i architektury](docs/PROJECT_OVERVIEW.md)** — role aplikacji, katalog wszystkich 17 repozytoriów, scenariusze integracyjne i zasady architektoniczne.
+- **[Poglądowa roadmapa AliceAI](docs/ROADMAP.md)** — kolejność prac R0–R8, zadania dla usług, zależności i kryteria ukończenia.
+
+### Przegląd obszarów
+
+| Obszar | Komponenty |
+| --- | --- |
+| Interfejsy | Alice Web, Alice Desktop, Alice Browser Extension |
+| Asystent i wiedza | LLM, Knowledge |
+| Organizacja dnia | Time Coordinator, Mail, Weather, Dashboard |
+| Dane osobiste | Budget, Health, Shopping |
+| Dom i multimedia | SmartHome, Media |
+| Hosty i infrastruktura | Node, Node Manager, Infra |
+
+> Dokumenty opisują stan i zamierzenia na 28.10.2026. Sama obecność kodu lub opisu nie oznacza potwierdzenia produkcyjnej gotowości. Roadmapa jest propozycją, a nie harmonogramem zatwierdzonym terminowo.
+
+
 ## ALICE README v1.0 — karta projektu
 
 > Standard dokumentacyjny v1.0 (2026-10-28). Informacje o implementacji poniżej wynikają z widocznej struktury repozytorium i istniejącej dokumentacji. Nie oznaczają wykonania testów uruchomieniowych. Szczegółowe informacje historyczne zachowano w dalszej części pliku.
