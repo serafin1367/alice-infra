@@ -63,7 +63,7 @@ def sync_project(project, cfg, branch, apply):
                     if base.returncode == 1:
                         item["status"] = "DIVERGED"
                         item["detail"] = "Target is not an ancestor of GitHub; manual review required"
-                    return item
+                        return item
                     if base.returncode:
                         raise RuntimeError("Cannot verify fast-forward ancestry")
                 if not apply:
@@ -97,12 +97,11 @@ def main():
     projects = [x for x in cfg["projects"] if not args.only or x["github"] in args.only]
     unknown = set(args.only) - {x["github"] for x in cfg["projects"]}
     if unknown:
-        p.error("Unknown project(s):    with ThreadPoolExecutor(max_workers=args.workers) as executor:
+        p.error("Unknown project(s): " + ", ".join(sorted(unknown)))
+    with ThreadPoolExecutor(max_workers=args.workers) as executor:
         results = list(executor.map(lambda project: sync_project(project, cfg, branch, args.apply), projects))
     for item in results:
         print(f"{item['github']}: {item['status']}")
-(item)
-        print(f"{name}: {item['status']}")
     report = {"schema_version": 1, "generated_at": iso(), "mode": "apply" if args.apply else "dry-run", "workers": args.workers,
               "projects": results}
     report_file.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
