@@ -44,3 +44,12 @@ Powyższa tabela jest **historycznym stanem audytu przed naprawami**; nie należ
 - **Status raportowany**: po synchronizacji CI wszystkie 17 repozytoriów miały `success`, ale liczba rzeczywiście wykonanych testów, pełne artefakty JUnit i scenariusze integracyjne nie zostały jeszcze niezależnie zweryfikowane w tym audycie.
 
 **Kolejne działania:** zebrać liczbę testów z artefaktów, ustalić kontrakty i topologię, przygotować macierz testów integracyjnych, wykonywać izolowane smoke, failure/recovery i backup/restore, dokumentować dowody. Zielony pipeline oznacza `CI Passed`, nie `Integration Verified` ani `Production Ready`.
+
+
+### Decyzja o kolejności testów — 30.10.2026
+
+**Obowiązujący najbliższy etap: wyłącznie testy jednostkowe (Unit Test Gate).** Wcześniej opisany etap testów integracyjnych i odpornościowych jest **odroczony** i nie należy go uruchamiać jako następnego kroku.
+
+Zakres bieżącego etapu: zinwentaryzować testy jednostkowe i odróżnić je od smoke, build, testów infrastrukturalnych oraz integracyjnych; zebrać raporty/liczby testów i przypadki pominięte; wskazać luki; dodać brakujące izolowane testy jednostkowe i egzekwować je w CI. Zależności zewnętrzne zastępować mockami/stubami tam, gdzie to uzasadnione. Testy nie mogą wymagać uruchomionego środowiska Proxmox ani produkcyjnych usług.
+
+Dopiero po potwierdzeniu zakresu i wyników jednostkowych powrócić do planowania integracji. Zielony pipeline lub trzy testy kontrolne nie świadczą o kompletnym pokryciu logiki aplikacji.
