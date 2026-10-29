@@ -122,3 +122,12 @@ Pierwszym planowanym komponentem współdzielonej infrastruktury jest **RabbitMQ
 **Kryteria statusów:** `CI Passed` = poprawny pipeline; `Integration Verified` = udokumentowane, zakończone sukcesem scenariusze pomiędzy usługami; `Production Ready` = dodatkowo potwierdzone odporność, bezpieczeństwo, monitorowanie, odtwarzanie i procedura wdrożenia. Obecne zielone CI **nie oznacza** dwóch ostatnich statusów. Dla każdej próby zapisywać wersję/commit, środowisko, wynik, logi/artefakty i zgłoszenia usterek.
 
 **Zakres:** `browser-extension` pozostaje poza obowiązkową bramką stabilizacji do decyzji o dalszym rozwoju. Aktualny plan i wyniki audytu: [audyt testów](docs/quality-audit-2026-10-30.md).
+
+
+### Decyzja o kolejności testów — 30.10.2026
+
+**Obowiązujący najbliższy etap: wyłącznie testy jednostkowe (Unit Test Gate).** Wcześniej opisany etap testów integracyjnych i odpornościowych jest **odroczony** i nie należy go uruchamiać jako następnego kroku.
+
+Zakres bieżącego etapu: zinwentaryzować testy jednostkowe i odróżnić je od smoke, build, testów infrastrukturalnych oraz integracyjnych; zebrać raporty/liczby testów i przypadki pominięte; wskazać luki; dodać brakujące izolowane testy jednostkowe i egzekwować je w CI. Zależności zewnętrzne zastępować mockami/stubami tam, gdzie to uzasadnione. Testy nie mogą wymagać uruchomionego środowiska Proxmox ani produkcyjnych usług.
+
+Dopiero po potwierdzeniu zakresu i wyników jednostkowych powrócić do planowania integracji. Zielony pipeline lub trzy testy kontrolne nie świadczą o kompletnym pokryciu logiki aplikacji.
