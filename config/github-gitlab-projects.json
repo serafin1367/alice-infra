@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "github_owner": "serafin1367",
+  "gitlab_base_url": "https://gitlab.mbb.net.pl",
+  "branch": "main",
+  "projects": [
+    {
+      "github": "alice-infra",
+      "gitlab": "alice/infra"
+    },
+    {
+      "github": "alice-node",
+      "gitlab": "alice/Node"
+    },
+    {
+      "github": "alice-node-manager",
+      "gitlab": "alice/microservices/node-manager"
+    },
+    {
+      "github": "alice-web",
+      "gitlab": "alice/alice-web"
+    },
+    {
+      "github": "alice-desktop",
+      "gitlab": "alice/desktop"
+    },
+    {
+      "github": "alice-browser-extension",
+      "gitlab": "alice/Browser Extension"
+    },
+    {
+      "github": "alice-microservice-dashboard",
+      "gitlab": "alice/microservices/dashboard"
+    },
+    {
+      "github": "alice-microservice-budget",
+      "gitlab": "alice/microservices/budget"
+    },
+    {
+      "github": "alice-microservices-mail",
+      "gitlab": "alice/microservices/mail"
+    },
+    {
+      "github": "alice-microservices-llm",
+      "gitlab": "alice/microservices/llm"
+    },
+    {
+      "github": "alice-microservices-health",
+      "gitlab": "alice/microservices/health"
+    },
+    {
+      "github": "alice-microservices-shopping",
+      "gitlab": "alice/microservices/shop"
+    },
+    {
+      "github": "alice-microservices-knowledge",
+      "gitlab": "alice/microservices/knowledge"
+    },
+    {
+      "github": "alice-microservices-media",
+      "gitlab": "alice/microservices/Media"
+    },
+    {
+      "github": "alice-microservices-smarthome",
+      "gitlab": "alice/microservices/smarthome"
+    },
+    {
+      "github": "alice-microservices-time_coordinator",
+      "gitlab": "alice/microservices/time_coordinator"
+    },
+    {
+      "github": "alice-weather",
+      "gitlab": "alice/microservices/weather"
+    },
+    {
+      "github": "alice-microservices-work",
+      "gitlab": "alice/microservices/work"
+    }
+  ]
+}
