@@ -9,7 +9,7 @@ infra-yaml:
     - 'command -v docker >/dev/null || { echo "Docker CLI unavailable"; exit 1; }'
     - 'docker info >/dev/null || { echo "Docker daemon unavailable"; exit 1; }'
     - |
-      docker run --rm --user "$(id -u):$(id -g)" -v "$CI_PROJECT_DIR:/repo:ro" -w /repo python:3.12-alpine sh -ec '
+      docker run --rm -v "$CI_PROJECT_DIR:/repo:ro" -w /repo python:3.12-alpine sh -ec '
         pip install --quiet --disable-pip-version-check --no-cache-dir PyYAML
         python - <<'"'"'PY'"'"'
       from pathlib import Path
