@@ -26,7 +26,7 @@
     },
     {
       "github": "alice-browser-extension",
-      "gitlab": "alice/Browser Extension"
+      "gitlab": "alice/browser-extension"
     },
     {
       "github": "alice-microservice-dashboard",
