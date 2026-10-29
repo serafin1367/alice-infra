@@ -26,6 +26,7 @@ infra-yaml:
               raise SystemExit(f"INVALID YAML {p}: {exc}")
       print(f"Parsed {len(files)} YAML file(s).")
       PY
+      '
 
 infra-compose:
   stage: validate
