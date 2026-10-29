@@ -1,20 +1,17 @@
-# ALICE Unit Test Gate v1 — progi przejściowe
+# ALICE Unit Test Gate v1 — jednolity próg pokrycia
 
-Data decyzji: 2026-10-30. Zakres: repozytoria aplikacyjne AliceAI; testy integracyjne są odroczone.
+Data decyzji: 2026-10-30. Zakres: repozytoria aplikacyjne AliceAI. Testy integracyjne pozostają odroczone.
 
-## Przyjęte cele
-- **15% pokrycia linii** — początkowy minimalny próg dla zwykłego kodu aplikacyjnego, po uruchomieniu poprawnego pomiaru.
-- **30% pokrycia linii** — cel kolejnej iteracji dla zwykłego kodu; na razie nie blokuje CI.
-- **50% pokrycia linii** — docelowe minimum dla wyodrębnionych modułów logiki krytycznej (np. uwierzytelnianie, operacje finansowe, integralność danych). Zanim będzie egzekwowane, właściciel modułu musi wskazać jego zakres i sposób pomiaru.
-- **80%** — możliwy cel długoterminowy, nieobowiązujący obecnie.
+## Zasada
+**Minimalne wymagane pokrycie: 30% wykonywalnych linii kodu przez testy jednostkowe.** Jeden próg dla całego kodu aplikacyjnego — bez podziału na moduły krytyczne i zwykłe. To nie jest odsetek klas ani liczba testów. Pokrycie gałęzi można raportować informacyjnie, ale nie jest teraz warunkiem akceptacji.
 
-Procenty odnoszą się do **pokrycia wykonywalnych linii kodu przez testy jednostkowe**, a nie do odsetka klas, liczby testów ani powodzenia pipeline. Pokrycie gałęzi raportować informacyjnie, bez minimalnego progu na tym etapie.
+## Wdrożenie
+1. W każdym repozytorium rozdzielić jednostkowe od testów kontrolnych, integracyjnych i samego budowania aplikacji.
+2. Skonfigurować wiarygodny pomiar pokrycia kodu testami jednostkowymi właściwy dla danego języka oraz udokumentować zakres pomiaru i wyłączenia, np. kod generowany lub zależności zewnętrzne.
+3. W raportach CI podawać wynik pokrycia, liczbę wykonanych/pominiętych/nieudanych testów i commit. Brak wykonanych testów lub brak prawidłowego raportu nie może być traktowany jako zaliczenie bramki.
+4. Po zweryfikowaniu pomiaru egzekwować **coverage >= 30%** w GitLab CI; wynik niższy powoduje niezaliczenie Unit Test Gate. Wszystkie uruchomione testy jednostkowe muszą zakończyć się sukcesem.
+5. Nie uruchamiać testów integracyjnych ani nie zmieniać produkcji w ramach tego etapu.
 
-## Wdrażanie bez fałszywie zielonych i fałszywie czerwonych wyników
-1. Zinwentaryzować istniejące przypadki testowe oraz mierzalne moduły, w tym Alice Desktop.
-2. Włączyć narzędzie pomiarowe właściwe dla języka; oddzielić unit od integracyjnych i smoke; ujawniać zero testów, brak raportu lub błąd instrumentacji jako „brak wiarygodnego pomiaru”, a nie 0% czy sukces.
-3. Zebrać wartość bazową dla każdego repozytorium i oznaczyć moduły krytyczne; udokumentować uzasadnione wyłączenia kodu generowanego, GUI i platformowego.
-4. Dopiero po weryfikacji raportów uruchomić blokowanie CI dla minimalnych 15% zwykłego kodu oraz 50% modułów krytycznych, etapowo i bez ignorowania istniejących testów. Do tego czasu progi są przyjętym standardem, **nie są jeszcze technicznie egzekwowane**.
-5. Każdy wykonany test musi przejść; nowe zmiany nie powinny zmniejszać pokrycia względem ustalonej bazy. Cel 30% jest następny, a późniejsze podniesienie do 80% wymaga osobnej decyzji.
+**Stan wdrożenia:** ustalony próg jest normą dokumentacyjną. Nie oznacza to jeszcze, że wszystkie repozytoria raportują pokrycie lub że GitLab CI już blokuje wyniki poniżej 30%. Egzekwowanie wymaga osobnych, zweryfikowanych zmian w konfiguracji każdego projektu.
 
-Wyniki dokumentować dla konkretnego commita: liczba testów wykonanych / pominiętych / błędnych, pokrycie linii, zakres pomiaru, narzędzie i artefakty. Testy integracyjne pozostają na późniejszy etap.
+Wcześniejsza propozycja progów 15%, 50% i celu 80% została zastąpiona niniejszą decyzją.
