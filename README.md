@@ -106,3 +106,19 @@ Pierwszym planowanym komponentem współdzielonej infrastruktury jest **RabbitMQ
 2. Dodać konfigurację uruchomieniową współdzielonego RabbitMQ.
 3. Przygotować dokumentację przypisania poszczególnych usług do hostów.
 4. Przenieść zasoby wdrożeniowe specyficzne dla poszczególnych środowisk z repozytoriów mikroserwisów do repozytorium infrastruktury.
+
+
+## Status stabilizacji i testów — 30.10.2026
+
+**Etap dokumentacji i podstawowego CI/CD:** zakończony według centralnego raportu omawianego 30.10.2026: 17 repozytoriów raportowano jako `success`, łącznie z Alice Web, Alice Desktop i Alice Infra. To stan raportowany, a nie niezależne potwierdzenie poprawności funkcjonalnej całej platformy.
+
+**Zamknięte luki CI (po audycie z 30.10):**
+- Alice Web: osobny etap `test` (`node --test tests/*.test.mjs`) przed budowaniem obrazu; początkowo trzy testy kontrolne.
+- Alice Desktop: etap `test` uruchamia `unittest discover` i kończy się błędem, gdy brakuje katalogu `tests`; początkowo trzy testy kontrolne. Nie obejmuje uruchomienia GUI ani pakowania EXE dla Windows.
+- Alice Infra: walidacja składni YAML i głównych plików Docker Compose w CI; brak operacji wdrożeniowych. Walidacja Dockerfile i skan sekretów wymagają osobnej weryfikacji — nie są potwierdzone obecnym plikiem CI.
+
+**Następny etap: ALICE Stability Gate v2 — testy integracyjne i odpornościowe.** Środowisko docelowe: Proxmox z usługami Docker; Alice Web i Alice Desktop jako interfejsy wspólnego zaplecza, wraz z Alice Node, RabbitMQ, bazami i mikroserwisami. Rozpocząć od inwentaryzacji zależności, adresów usług, kontraktów API, kolejek i healthchecków. Następnie zweryfikować scenariusze komunikacji, niedostępności zależności, restartów, ponownych połączeń, trwałości danych, backup/restore oraz obserwowalności. Testy prowadzić najpierw w izolowanym środowisku; nie modyfikować produkcji bez osobnej decyzji.
+
+**Kryteria statusów:** `CI Passed` = poprawny pipeline; `Integration Verified` = udokumentowane, zakończone sukcesem scenariusze pomiędzy usługami; `Production Ready` = dodatkowo potwierdzone odporność, bezpieczeństwo, monitorowanie, odtwarzanie i procedura wdrożenia. Obecne zielone CI **nie oznacza** dwóch ostatnich statusów. Dla każdej próby zapisywać wersję/commit, środowisko, wynik, logi/artefakty i zgłoszenia usterek.
+
+**Zakres:** `browser-extension` pozostaje poza obowiązkową bramką stabilizacji do decyzji o dalszym rozwoju. Aktualny plan i wyniki audytu: [audyt testów](docs/quality-audit-2026-10-30.md).
