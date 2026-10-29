@@ -32,3 +32,15 @@ Data odczytu: 2026-10-30. Zakres: 16 repozytoriów ze statusem `success` w `alic
 
 ## Następna partia dowodów
 Zebrać raporty testowe konkretnych commitów, listę rzeczywistych przypadków testowych i ich wyniki. Ustalić minimalne kryteria: żaden projekt aplikacyjny nie uzyskuje pełnego `Tests Verified` bez potwierdzonych przypadków; brak testów jest raportowany oddzielnie. Dopiero po tym wprowadzać zmiany w kodzie.
+
+
+## Aktualizacja po audycie — 30.10.2026
+
+Powyższa tabela jest **historycznym stanem audytu przed naprawami**; nie należy traktować dwóch wpisów P1 jako nadal otwartych problemów konfiguracji.
+
+- **Alice Web**: na gałęzi głównej potwierdzono etap `test` z `node --test tests/*.test.mjs`; według rozmowy wdrożono trzy testy kontrolne. Zakres nie jest jeszcze testem end-to-end ani integracją z mikroserwisami.
+- **Alice Desktop**: na gałęzi głównej potwierdzono, że brak katalogu `tests` powoduje błąd, a obecny etap uruchamia `unittest discover`; według rozmowy wdrożono trzy testy kontrolne. Brakuje testów GUI Windows i potwierdzenia pakowania EXE.
+- **Alice Infra**: CI sprawdza YAML oraz główne pliki Docker Compose; nie wdraża usług.
+- **Status raportowany**: po synchronizacji CI wszystkie 17 repozytoriów miały `success`, ale liczba rzeczywiście wykonanych testów, pełne artefakty JUnit i scenariusze integracyjne nie zostały jeszcze niezależnie zweryfikowane w tym audycie.
+
+**Kolejne działania:** zebrać liczbę testów z artefaktów, ustalić kontrakty i topologię, przygotować macierz testów integracyjnych, wykonywać izolowane smoke, failure/recovery i backup/restore, dokumentować dowody. Zielony pipeline oznacza `CI Passed`, nie `Integration Verified` ani `Production Ready`.
