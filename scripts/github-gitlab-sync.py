@@ -87,12 +87,17 @@ def main():
     p.add_argument("--dry-run", action="store_true", help="Only preview sync; do not publish CI reports")
     p.add_argument("--only", action="append", default=[], help="GitHub repository name; repeatable")
     p.add_argument("--report", type=Path, help="Report path (default: reports/github-gitlab-sync.json)")
-    p.add_argument("--workers", type=int, default=4, help="Concurrent repositories (1-16, default 4)")\n    p.add_argument("--collect-ci", action="store_true", help="Collect CI reports (enabled by default; retained for compatibility)")
+    p.add_argument("--workers", type=int, default=4, help="Concurrent repositories (1-16, default 4)")
+    p.add_argument("--collect-ci", action="store_true", help="Collect CI reports (enabled by default; retained for compatibility)")
     p.add_argument("--no-collect-ci", action="store_true", help="Skip CI report collection")
     args = p.parse_args()
     if not 1 <= args.workers <= 16:
         p.error("--workers must be 1..16")
-    if args.collect_ci and not args.apply:\n        p.error("--collect-ci requires --apply")\n    cfg = json.loads(args.config.read_text(encoding="utf-8"))
+    if args.apply and args.dry_run:
+        p.error("--apply and --dry-run cannot be combined")
+    apply = not args.dry_run
+    collect_ci = apply and not args.no_collect_ci
+    cfg = json.loads(args.config.read_text(encoding="utf-8"))
     report_file = args.report or BASE / "reports" / "github-gitlab-sync.json"
     report_file.parent.mkdir(parents=True, exist_ok=True)
     branch = cfg.get("branch", "main")
@@ -108,7 +113,21 @@ def main():
               "projects": results}
     report_file.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print("Report:", report_file)
-    sync_failed = any(x["status"] in ("ERROR", "DIVERGED") for x in results)\n    if args.collect_ci:\n        # Collect all configured projects, including ones whose sync failed, so CI errors remain visible.\n        collector = BASE / "scripts" / "publish-ci-reports.sh"\n        env = dict(os.environ, GITLAB_URL=cfg["gitlab_base_url"],\n                   GITLAB_PROJECTS=",".join(x["gitlab"] for x in projects))\n        try:\n            completed = subprocess.run(["bash", str(collector)], env=env, timeout=600, check=False)\n            if completed.returncode:\n                print("CI report collection/publish failed", file=sys.stderr)\n                sync_failed = True\n        except (OSError, subprocess.TimeoutExpired) as exc:\n            print(f"CI report collection failed: {type(exc).__name__}", file=sys.stderr)\n            sync_failed = True\n    return 1 if sync_failed else 0
+    sync_failed = any(x["status"] in ("ERROR", "DIVERGED") for x in results)
+    if collect_ci:
+        # Collect all configured projects, including ones whose sync failed, so CI errors remain visible.
+        collector = BASE / "scripts" / "publish-ci-reports.sh"
+        env = dict(os.environ, GITLAB_URL=cfg["gitlab_base_url"],
+                   GITLAB_PROJECTS=",".join(x["gitlab"] for x in projects))
+        try:
+            completed = subprocess.run(["bash", str(collector)], env=env, timeout=600, check=False)
+            if completed.returncode:
+                print("CI report collection/publish failed", file=sys.stderr)
+                sync_failed = True
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            print(f"CI report collection failed: {type(exc).__name__}", file=sys.stderr)
+            sync_failed = True
+    return 1 if sync_failed else 0
 
 if __name__ == "__main__":
     sys.exit(main())
