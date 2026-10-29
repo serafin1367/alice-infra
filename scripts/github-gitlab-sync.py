@@ -83,10 +83,12 @@ def sync_project(project, cfg, branch, apply):
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
-    p.add_argument("--apply", action="store_true", help="Perform fast-forward pushes (default: dry-run)")
+    p.add_argument("--apply", action="store_true", help="Perform fast-forward pushes (default behavior; retained for compatibility)")
+    p.add_argument("--dry-run", action="store_true", help="Only preview sync; do not publish CI reports")
     p.add_argument("--only", action="append", default=[], help="GitHub repository name; repeatable")
     p.add_argument("--report", type=Path, help="Report path (default: reports/github-gitlab-sync.json)")
-    p.add_argument("--workers", type=int, default=4, help="Concurrent repositories (1-16, default 4)")\n    p.add_argument("--collect-ci", action="store_true", help="Collect GitLab pipeline reports and publish to GitHub (requires --apply)")
+    p.add_argument("--workers", type=int, default=4, help="Concurrent repositories (1-16, default 4)")\n    p.add_argument("--collect-ci", action="store_true", help="Collect CI reports (enabled by default; retained for compatibility)")
+    p.add_argument("--no-collect-ci", action="store_true", help="Skip CI report collection")
     args = p.parse_args()
     if not 1 <= args.workers <= 16:
         p.error("--workers must be 1..16")
@@ -99,10 +101,10 @@ def main():
     if unknown:
         p.error("Unknown project(s): " + ", ".join(sorted(unknown)))
     with ThreadPoolExecutor(max_workers=args.workers) as executor:
-        results = list(executor.map(lambda project: sync_project(project, cfg, branch, args.apply), projects))
+        results = list(executor.map(lambda project: sync_project(project, cfg, branch, apply), projects))
     for item in results:
         print(f"{item['github']}: {item['status']}")
-    report = {"schema_version": 1, "generated_at": iso(), "mode": "apply" if args.apply else "dry-run", "workers": args.workers,
+    report = {"schema_version": 1, "generated_at": iso(), "mode": "apply" if apply else "dry-run", "workers": args.workers,
               "projects": results}
     report_file.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print("Report:", report_file)
