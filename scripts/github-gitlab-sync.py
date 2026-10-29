@@ -116,11 +116,11 @@ def main():
     sync_failed = any(x["status"] in ("ERROR", "DIVERGED") for x in results)
     if collect_ci:
         # Collect all configured projects, including ones whose sync failed, so CI errors remain visible.
-        collector = BASE / "scripts" / "publish-ci-reports.sh"
+        collector = BASE / "scripts" / "publish-ci-reports.py"
         env = dict(os.environ, GITLAB_URL=cfg["gitlab_base_url"],
                    GITLAB_PROJECTS=",".join(x["gitlab"] for x in projects))
         try:
-            completed = subprocess.run(["bash", str(collector)], env=env, timeout=600, check=False)
+            completed = subprocess.run([sys.executable, str(collector)], env=env, timeout=900, check=False)
             if completed.returncode:
                 print("CI report collection/publish failed", file=sys.stderr)
                 sync_failed = True
