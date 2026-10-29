@@ -19,6 +19,17 @@ python3 scripts/github-gitlab-sync.py --apply
 
 Wynik zapisuje się w `reports/github-gitlab-sync.json` (ignorowane przez Git): data UTC, SHA źródła i celu, status `UP_TO_DATE`, `WOULD_UPDATE`, `UPDATED`, `DIVERGED`, `ERROR`. Wywołanie z `--apply` może uruchomić pipeline GitLaba. W razie błędu dostępu do GitHuba/GitLaba synchronizacja repozytorium jest pomijana, a proces kończy się kodem niezerowym.
 
+## Równoległa synchronizacja
+
+Każde repozytorium jest obsługiwane w osobnym katalogu tymczasowym przez pulę wątków. Domyślnie są to **4 równoległe zadania**; parametr `--workers N` pozwala ustawić od 1 do 16. JSON zachowuje kolejność projektów z mapy, niezależnie od kolejności zakończenia. Bez `--apply` synchronizacja jest tylko symulowana.
+
+```bash
+python3 scripts/github-gitlab-sync.py --workers 4
+python3 scripts/github-gitlab-sync.py --workers 8 --apply
+```
+
+Nie uruchamiaj dwóch niezależnych procesów synchronizacji jednocześnie. Przy wielu projektach zacznij od 4 wątków, aby nie obciążać GitLaba nadmierną liczbą połączeń. Zwiększ do 8 dopiero po poprawnych testach. W raporcie JSON zapisywana jest też liczba workerów.
+
 ## Automatyzacja
 
 Po ręcznym sprawdzeniu mapowania, uprawnień i dry-run można uruchamiać narzędzie cyklicznie z dedykowanego hosta lub harmonogramu CI z minimalnymi uprawnieniami. Nie zapisuj tokenów w pliku JSON, URL Git ani logach. Przy automatyzacji pilnuj, by jednocześnie działał tylko jeden proces synchronizacji.
