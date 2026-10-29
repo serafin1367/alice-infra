@@ -1,0 +1,48 @@
+# Infrastructure validation only. No deployment, restart, or production changes.
+stages:
+  - validate
+
+infra-yaml:
+  stage: validate
+  tags: [alice-quality-docker]
+  script:
+    - 'command -v docker >/dev/null || { echo "Docker CLI unavailable"; exit 1; }'
+    - 'docker info >/dev/null || { echo "Docker daemon unavailable"; exit 1; }'
+    - |
+      docker run --rm --user "$(id -u):$(id -g)" -v "$CI_PROJECT_DIR:/repo:ro" -w /repo python:3.12-alpine sh -ec '
+        pip install --quiet --disable-pip-version-check --no-cache-dir PyYAML
+        python - <<'"'"'PY'"'"'
+      from pathlib import Path
+      import yaml
+      files = sorted(p for p in Path(".").rglob("*") if p.is_file() and p.suffix.lower() in (".yml", ".yaml") and not any(part in (".git", "node_modules", ".venv", "venv") for part in p.parts))
+      if not files:
+          print("No YAML files discovered; validation not applicable.")
+      for p in files:
+          try:
+              with p.open(encoding="utf-8") as fh:
+                  list(yaml.safe_load_all(fh))
+              print(f"OK {p}")
+          except Exception as exc:
+              raise SystemExit(f"INVALID YAML {p}: {exc}")
+      print(f"Parsed {len(files)} YAML file(s).")
+      PY
+
+infra-compose:
+  stage: validate
+  tags: [alice-quality-docker]
+  script:
+    - 'command -v docker >/dev/null || { echo "Docker CLI unavailable"; exit 1; }'
+    - 'docker compose version >/dev/null || { echo "Docker Compose plugin unavailable"; exit 1; }'
+    - |
+      set -eu
+      found=0
+      for file in compose.yml compose.yaml docker-compose.yml docker-compose.yaml; do
+        if [ -f "$file" ]; then
+          found=1
+          echo "Validating $file"
+          docker compose -f "$file" config --quiet
+        fi
+      done
+      if [ "$found" -eq 0 ]; then
+        echo "No root-level Compose file; infrastructure Compose validation not applicable."
+      fi
