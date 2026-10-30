@@ -6,7 +6,7 @@ import subprocess
 import sys
 import tempfile
 
-REPO = "https://github.com/serafin1367/alice-ci-reports.git"
+REPO = "git@github.com:serafin1367/alice-ci-reports.git"
 
 def run(*args, cwd=None, env=None, timeout=300):
     subprocess.run(args, cwd=cwd, env=env, timeout=timeout, check=True)

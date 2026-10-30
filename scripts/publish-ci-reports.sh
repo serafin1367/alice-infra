@@ -18,7 +18,7 @@ esac
 EOF
 chmod 700 "$WORK/askpass"
 export GIT_ASKPASS="$WORK/askpass" GIT_TERMINAL_PROMPT=0
-git clone -q https://github.com/serafin1367/alice-ci-reports.git "$WORK/reports"
+git clone -q git@github.com:serafin1367/alice-ci-reports.git "$WORK/reports"
 cd "$WORK/reports"
 test -f scripts/collect_pipelines.py || { echo "Merge alice-ci-reports PR #1 first"; exit 1; }
 export REPORT_DIR="$PWD"
