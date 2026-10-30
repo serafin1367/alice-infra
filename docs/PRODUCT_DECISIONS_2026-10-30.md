@@ -53,3 +53,12 @@
 - Konkretne role, polityki uprawnień, procedury zatwierdzania i kryteria klasyfikacji ryzyka.
 - Lista istniejących komponentów AliceAI, które mogą przejąć nowe odpowiedzialności, do potwierdzenia audytem kodu.
 - Mierniki skuteczności nocnych zadań, testy bezpieczeństwa i polityka retencji logów.
+
+## Architektura inteligencji — decyzja zatwierdzona
+- Model **hybrydowy**: jedna rozpoznawalna osobowość Alice i centralna koordynacja rozmów, celów, pamięci oraz decyzji.
+- Wyspecjalizowani agenci są uruchamiani na potrzeby złożonych zadań domenowych (np. Mail, Home, Life, Media, infrastruktura), a nie jako niezależne osobowości.
+- Centralny koordynator deleguje zadania z ograniczonym zakresem danych, uprawnień, czasu i zasobów; odbiera wyniki i przedstawia je użytkownikowi spójnym głosem Alice.
+- Każdy agent podlega wspólnej polityce autoryzacji, audytu, limitów i zatwierdzeń. Delegacja nie może zwiększać uprawnień.
+- Preferowane są zwykłe deterministyczne narzędzia do prostych operacji; dodatkowy agent/LLM jest uruchamiany tylko, gdy złożoność zadania to uzasadnia.
+- Pięć filarów (Assistant, Life, Home, Media, Flow) pozostaje logicznym podziałem produktu, nie wymusza pięciu agentów ani mikroserwisów.
+- Szczegóły protokołu delegacji, izolacji, pamięci agentów i przyporządkowania do istniejących usług pozostają do zaprojektowania i zweryfikowania w kodzie.
