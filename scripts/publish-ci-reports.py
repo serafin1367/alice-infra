@@ -7,6 +7,7 @@ import sys
 import tempfile
 
 REPO = "git@github.com:serafin1367/alice-ci-reports.git"
+MAX_PUBLISH_ATTEMPTS = 3
 
 def run(*args, cwd=None, env=None, timeout=300):
     subprocess.run(args, cwd=cwd, env=env, timeout=timeout, check=True)
@@ -20,25 +21,42 @@ def main():
     with tempfile.TemporaryDirectory(prefix="alice-ci-reports-") as tmp:
         dest = Path(tmp) / "reports"
         run("git", "clone", "-q", REPO, str(dest), env=env)
-        collector = dest / "scripts" / "collect_pipelines.py"
-        if not collector.is_file():
-            print("Missing scripts/collect_pipelines.py in reports repository", file=sys.stderr)
-            return 2
-        env["REPORT_DIR"] = str(dest)
-        run(sys.executable, str(collector), cwd=dest, env=env, timeout=600)
-        run("git", "add", "-A", "--", "index.json", "latest", "history", cwd=dest, env=env)
-        diff = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=dest, env=env)
-        if diff.returncode == 0:
-            print("No CI report changes")
-            return 0
-        if diff.returncode != 1:
-            print("Unable to inspect staged changes", file=sys.stderr)
-            return 1
-        run("git", "-c", "user.name=alice-ci-reporter",
-            "-c", "user.email=alice-ci-reporter@users.noreply.github.com",
-            "commit", "-m", "ci: update GitLab pipeline reports", cwd=dest, env=env)
-        run("git", "push", "origin", "HEAD:main", cwd=dest, env=env)
-        print("CI reports published to alice-ci-reports/main")
+        for attempt in range(1, MAX_PUBLISH_ATTEMPTS + 1):
+            if attempt > 1:
+                # The worktree is disposable. Rebuild reports from the current
+                # remote head instead of rebasing generated JSON snapshots.
+                print(f"Retrying CI publication ({attempt}/{MAX_PUBLISH_ATTEMPTS})")
+                run("git", "fetch", "-q", "origin", "main", cwd=dest, env=env)
+                run("git", "reset", "--hard", "FETCH_HEAD", cwd=dest, env=env)
+
+            collector = dest / "scripts" / "collect_pipelines.py"
+            if not collector.is_file():
+                print("Missing scripts/collect_pipelines.py in reports repository", file=sys.stderr)
+                return 2
+            env["REPORT_DIR"] = str(dest)
+            run(sys.executable, str(collector), cwd=dest, env=env, timeout=600)
+            run("git", "add", "-A", "--", "index.json", "latest", "history",
+                cwd=dest, env=env)
+            diff = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=dest, env=env)
+            if diff.returncode == 0:
+                print("No CI report changes")
+                return 0
+            if diff.returncode != 1:
+                print("Unable to inspect staged changes", file=sys.stderr)
+                return 1
+            run("git", "-c", "user.name=alice-ci-reporter",
+                "-c", "user.email=alice-ci-reporter@users.noreply.github.com",
+                "commit", "-m", "ci: update GitLab pipeline reports", cwd=dest, env=env)
+            push = subprocess.run(["git", "push", "origin", "HEAD:main"],
+                                  cwd=dest, env=env, timeout=300, check=False)
+            if push.returncode == 0:
+                print("CI reports published to alice-ci-reports/main")
+                return 0
+            if attempt == MAX_PUBLISH_ATTEMPTS:
+                print("CI publish failed: push rejected after retries", file=sys.stderr)
+                return 1
+            print("WARN: CI push rejected; refreshing remote before retry",
+                  file=sys.stderr)
     return 0
 
 if __name__ == "__main__":
