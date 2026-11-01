@@ -13,6 +13,7 @@ Ten katalog zawiera docelowy runtime produkcyjny z aplikacją Alice Web i jej br
 - `health-service`
 - `budget-service`
 - `smarthome-service`
+- `media-service`
 
 ## Struktura
 
@@ -214,3 +215,11 @@ KNOWLEDGE_STORAGE_HOST_DIR=/mnt/md0/docker/docker-volume/alice_ai/knowledge
 ```
 
 Wartość z `.env` nadpisuje domyślną ścieżkę Compose. Przed zmianą montowania przenieś dotychczasowe pliki Knowledge do nowego katalogu (jeżeli są już zapisane); sama zmiana konfiguracji ich nie przenosi. Katalog powinien być objęty backupem i zapisywalny przez kontener. Odtwórz usługę przez skrypt wdrożeniowy lub `docker compose --env-file .env up -d knowledge-service`.
+
+## Alice Media na produkcji
+
+Media jest budowany z `microservices/media`, automatycznie klonowanego przez `deploy-production.sh` z `alice/microservices/media.git`. Współdzieli PostgreSQL i RabbitMQ z pozostałymi usługami; baza `MEDIA_DB_NAME` i konto `MEDIA_DB_USERNAME` są tworzone przez `postgres/init/09-init-media-database.sh` również dla istniejącego wolumenu PostgreSQL. `MEDIA_DB_PASSWORD` musi być silnym sekretem w lokalnym `.env`, nie w repozytorium. Dla już istniejącej bazy hasło musi odpowiadać hasłu roli (skrypt nie resetuje go).
+
+Media nasłuchuje na 8096 wyłącznie w sieci Compose; Alice Web używa `MEDIA_UPSTREAM=http://media-service:8096`. Brak mapowania portu na hosta jest celowy: backend Media nie zapewnia zweryfikowanego uwierzytelnienia API. Aby korzystać z panelu, należy również upewnić się, że wdrożony Alice Web rzeczywiście odczytuje `MEDIA_UPSTREAM` i obsługuje proxy `/api/media/`. Sama zmienna środowiskowa nie tworzy routingu.
+
+Przed aktualizacją wykonaj backup. Dodaj `MEDIA_DB_PASSWORD` do produkcyjnego `.env` i wdrażaj standardowym `./deploy-production.sh`. Po wdrożeniu sprawdź `docker compose ps media-service`, `docker compose logs --tail=100 media-service` i z sieci kontenerów endpoint `http://media-service:8096/api/media/health`. Endpoint potwierdza odpowiedź HTTP, ale nie pełną sprawność Node/RabbitMQ/DB. Skrypt backupu wykorzystujący dump wszystkich baz PostgreSQL obejmie nową bazę; zweryfikuj to w archiwum i wykonaj próbę odtworzenia.
