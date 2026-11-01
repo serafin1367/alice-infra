@@ -26,6 +26,7 @@ declare -A REPOSITORY_URLS=(
   [budget]="http://gitlab.mbb.net.pl/alice/microservices/budget.git"
   [smarthome]="http://gitlab.mbb.net.pl/alice/microservices/smarthome.git"
   [media]="http://gitlab.mbb.net.pl/alice/microservices/media.git"
+  [node-manager]="http://gitlab.mbb.net.pl/alice/microservices/node-manager.git"
   [alice-web]="http://gitlab.mbb.net.pl/alice/alice-web.git"
 )
 
@@ -43,6 +44,7 @@ REPOSITORIES=(
   "$WORKSPACE_DIR/microservices/budget"
   "$WORKSPACE_DIR/microservices/smarthome"
   "$WORKSPACE_DIR/microservices/media"
+  "$WORKSPACE_DIR/microservices/node-manager"
   "$WORKSPACE_DIR/alice-web"
 )
 
