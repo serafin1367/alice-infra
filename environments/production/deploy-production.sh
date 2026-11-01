@@ -25,6 +25,7 @@ declare -A REPOSITORY_URLS=(
   [health]="http://gitlab.mbb.net.pl/alice/microservices/health.git"
   [budget]="http://gitlab.mbb.net.pl/alice/microservices/budget.git"
   [smarthome]="http://gitlab.mbb.net.pl/alice/microservices/smarthome.git"
+  [media]="http://gitlab.mbb.net.pl/alice/microservices/media.git"
   [alice-web]="http://gitlab.mbb.net.pl/alice/alice-web.git"
 )
 
@@ -41,6 +42,7 @@ REPOSITORIES=(
   "$WORKSPACE_DIR/microservices/health"
   "$WORKSPACE_DIR/microservices/budget"
   "$WORKSPACE_DIR/microservices/smarthome"
+  "$WORKSPACE_DIR/microservices/media"
   "$WORKSPACE_DIR/alice-web"
 )
 
@@ -116,6 +118,7 @@ docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.e
 docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/06-init-knowledge-database.sh
 docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/07-init-health-database.sh
 docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/08-init-budget-database.sh
+docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/09-init-media-database.sh
 
 echo "Aktualizacja uslug bez usuwania wolumenow"
 docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" up -d --no-build
