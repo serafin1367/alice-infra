@@ -16,6 +16,7 @@ services:
       WEATHER_UPSTREAM: ${ALICE_WEB_WEATHER_UPSTREAM:-http://weather-service:8081}
       LLM_UPSTREAM: ${ALICE_WEB_LLM_UPSTREAM:-http://llm-service:8084}
       SMARTHOME_UPSTREAM: ${ALICE_WEB_SMARTHOME_UPSTREAM:-http://smarthome-service:8091}
+      MEDIA_UPSTREAM: ${ALICE_WEB_MEDIA_UPSTREAM:-http://media-service:8096}
     ports:
       - "${ALICE_WEB_BIND_IP:-127.0.0.1}:${ALICE_WEB_PUBLIC_PORT:-8080}:80"
     healthcheck:
@@ -78,6 +79,9 @@ services:
       BUDGET_DB_NAME: ${BUDGET_DB_NAME:-budget}
       BUDGET_DB_USERNAME: ${BUDGET_DB_USERNAME:-budget}
       BUDGET_DB_PASSWORD: ${BUDGET_DB_PASSWORD:?Set BUDGET_DB_PASSWORD in production .env}
+      MEDIA_DB_NAME: ${MEDIA_DB_NAME:-alice_media}
+      MEDIA_DB_USERNAME: ${MEDIA_DB_USERNAME:-media}
+      MEDIA_DB_PASSWORD: ${MEDIA_DB_PASSWORD:?Set MEDIA_DB_PASSWORD in production .env}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -333,6 +337,33 @@ services:
       BUDGET_DB_PASSWORD: ${BUDGET_DB_PASSWORD:?Set BUDGET_DB_PASSWORD in production .env}
     ports:
       - "${BUDGET_PUBLIC_PORT:-8090}:8087"
+
+  media-service:
+    build:
+      context: ../../../microservices/media
+    container_name: ${MEDIA_CONTAINER_NAME:-alice-media-service}
+    hostname: media-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8096
+      DB_URL: jdbc:postgresql://postgres:5432/${MEDIA_DB_NAME:-alice_media}
+      DB_USER: ${MEDIA_DB_USERNAME:-media}
+      DB_PASSWORD: ${MEDIA_DB_PASSWORD:?Set MEDIA_DB_PASSWORD in production .env}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      RABBITMQ_VHOST: ${RABBITMQ_VHOST:-alice}
+      ALICE_MEDIA_LLM_BASE_URL: http://llm-service:8084
+      ALICE_ANILIST_ENABLED: ${ALICE_ANILIST_ENABLED:-false}
+      MEDIA_RPC_TIMEOUT_MS: ${MEDIA_RPC_TIMEOUT_MS:-10000}
+    expose:
+      - "8096"
 
   smarthome-service:
     build:
