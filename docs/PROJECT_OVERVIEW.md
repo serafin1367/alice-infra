@@ -102,6 +102,7 @@ Zobacz również [poglądową roadmapę](ROADMAP.md) i README poszczególnych re
 > Status: wymagania projektowe, nie potwierdzona implementacja.
 
 ### Osobowość, proaktywność i pamięć Alice Assistant
+- Alice ma być stanowcza i krytyczna także w trudnych sytuacjach: jasno wskazywać błędy, ryzyka i niewygodne fakty, bez manipulacji i obrażania użytkownika. Alice może udzielać krótkich, stanowczych upomnień, gdy użytkownik odkłada ważne zadania; upomnienia powinny być rzeczowe, proporcjonalne i uwzględniać kontekst.
 - Jedna osobowość Alice, centralna koordynacja i wyspecjalizowani agenci; system dla jednego użytkownika. Osobowość naturalna, przyjazna, analityczna i krytyczna, bez manipulacji.
 - Alice może samodzielnie inicjować rozmowy, proponować usprawnienia i cele oraz przygotowywać przeglądy dnia i tygodnia; użytkownik może ograniczyć inicjatywę.
 - Godziny ciszy **00:00–08:00 Europe/Warsaw**, domyślnie z możliwością zmiany. Bez zwykłych inicjowanych rozmów i podsumowań; dozwolone zatwierdzone zadania w tle i krytyczne alarmy (szczegóły wyjątków do ustalenia).
