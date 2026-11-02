@@ -95,3 +95,8 @@ Scenariusze opisują kierunek integracji. Dokładne kontrakty, zakresy uprawnie�
 - Nie przedstawiaj wpisów w roadmapie jako funkcji ukończonych bez testów i weryfikacji.
 
 Zobacz również [poglądową roadmapę](ROADMAP.md) i README poszczególnych repozytoriów.
+
+
+## Dokumentacja decyzji AliceAI — do uzupełnienia
+
+Uzgodnienia dotyczące Alice Assistant i nocnego rozwoju zostały tymczasowo zapisane w [backlogu Alice Media](https://github.com/serafin1367/alice-microservices-media/blob/main/docs/ALICE_MEDIA_BACKLOG.md). Należy przenieść je do dokumentacji `alice-infra`; nie stanowią potwierdzenia implementacji.
