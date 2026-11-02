@@ -122,3 +122,26 @@ Zobacz również [poglądową roadmapę](ROADMAP.md) i README poszczególnych re
 
 ### Dalsza realizacja
 - Implementacja mikroserwisu i mechanizmów nocnej pracy pozostaje do wykonania.
+
+
+## Alice Life — planowanie dnia i analiza finansów (ustalenia projektowe, 2026-11-02)
+
+> Status: zatwierdzone wymagania, niepotwierdzona implementacja.
+
+### Inteligentny planer dnia
+- Alice automatycznie przygotowuje co wieczór roboczy plan następnego dnia, również gdy kalendarz jest pusty.
+- Plan uwzględnia zapamiętane nawyki i powtarzalny rytm dni, typowe godziny pracy, posiłki, przerwy, spotkania, odpoczynek, spacer, siłownię oraz zadania wskazane przez użytkownika.
+- Alice rozróżnia stałe zobowiązania od elastycznych zwyczajów; przydziela zadaniom realistyczne przedziały i może szybko przeplanować dzień.
+- Alice samodzielnie układa bloki pracy, odpoczynku i aktywności w planie roboczym. Zmiany właściwego kalendarza, w tym przesuwanie spotkań i publikacja planu, wymagają uprzedniej zgody użytkownika.
+- Analizuje wykonanie poprzednich planów, by lepiej szacować czas, bez utrwalania pojedynczych wyjątków jako stałych nawyków.
+
+### Nocna analiza transakcji Budget
+- Alice analizuje w nocy **wyłącznie transakcje bez przypisanych kategorii lub tagów**. Nie przeprowadza ponownego audytu transakcji już przypisanych.
+- Wykorzystuje istniejący mikroserwis Budget i jego dane/API; nie tworzy konkurencyjnej bazy finansowej.
+- Na podstawie opisów, kontrahentów, historii transakcji i zaakceptowanych wcześniej reguł proponuje kategorię i/lub tagi wraz z uzasadnieniem i poziomem pewności.
+- Przy niejednoznacznych transakcjach sygnalizuje brak informacji zamiast arbitralnego przypisania.
+- **Nie przypisuje kategorii ani tagów bez zatwierdzenia użytkownika**. Przygotowuje jedno zbiorcze poranne podsumowanie z propozycjami i pytaniami; użytkownik może zatwierdzić, skorygować lub odrzucić pozycje, także zbiorczo.
+- Alice uwzględnia zatwierdzone korekty przy przyszłych propozycjach. Zwykłe powiadomienia respektują godziny ciszy 00:00–08:00 Europe/Warsaw.
+
+### Dalsza realizacja
+- Zaprojektować model planu roboczego, proces zatwierdzania kalendarza, integrację Budget oraz raport poranny. Powyższe nie potwierdza gotowej funkcjonalności.
