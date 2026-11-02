@@ -97,6 +97,27 @@ Scenariusze opisują kierunek integracji. Dokładne kontrakty, zakresy uprawnie�
 Zobacz również [poglądową roadmapę](ROADMAP.md) i README poszczególnych repozytoriów.
 
 
-## Dokumentacja decyzji AliceAI — do uzupełnienia
+## Zatwierdzone wymagania Alice Assistant i nocnego rozwoju (2026-11-02)
 
-Uzgodnienia dotyczące Alice Assistant i nocnego rozwoju zostały tymczasowo zapisane w [backlogu Alice Media](https://github.com/serafin1367/alice-microservices-media/blob/main/docs/ALICE_MEDIA_BACKLOG.md). Należy przenieść je do dokumentacji `alice-infra`; nie stanowią potwierdzenia implementacji.
+> Status: wymagania projektowe, nie potwierdzona implementacja.
+
+### Osobowość, proaktywność i pamięć Alice Assistant
+- Jedna osobowość Alice, centralna koordynacja i wyspecjalizowani agenci; system dla jednego użytkownika. Osobowość naturalna, przyjazna, analityczna i krytyczna, bez manipulacji.
+- Alice może samodzielnie inicjować rozmowy, proponować usprawnienia i cele oraz przygotowywać przeglądy dnia i tygodnia; użytkownik może ograniczyć inicjatywę.
+- Godziny ciszy **00:00–08:00 Europe/Warsaw**, domyślnie z możliwością zmiany. Bez zwykłych inicjowanych rozmów i podsumowań; dozwolone zatwierdzone zadania w tle i krytyczne alarmy (szczegóły wyjątków do ustalenia).
+- Alice samodzielnie wybiera istotne informacje do zapamiętania, zapamiętuje też na wyraźne polecenie („zapamiętaj”) i samodzielnie aktualizuje wspomnienia przy zmianie nawyków. Ma pamiętać własne błędy, analizować przyczyny i wykorzystywać wnioski. Należy zapewnić możliwość korekty/usunięcia pamięci i audyt źródeł.
+
+### Autonomiczny rozwój nocny — wymagania
+- Alice może analizować i modyfikować własny kod, przygotowywać poprawki oraz testować je w **istniejącym środowisku testowym**, z izolacją usług i danych stosownie do ryzyka.
+- W **każdym repozytorium AliceAI** ma mieć **stałą gałąź `alice-dev`**; nie modyfikuje bezpośrednio `main`. Użytkownik **sam ręcznie wykonuje merge do `main`** i kontroluje wdrożenie produkcyjne; Alice nie scala ani nie wdraża zmian produkcyjnych samodzielnie.
+- Autonomiczny rozwój wyłącznie **nocą, 00:00–08:00**. O 08:00 Alice przestaje rozpoczynać nowe kroki, bezpiecznie kończy lub wstrzymuje aktualny etap, zapisuje checkpoint i wznawia zadanie w następnym oknie. Operacji niebezpiecznych do przerwania nie wolno gwałtownie zabijać.
+- Rano Alice przedstawia dziennik/raport wykonanych prac, testów, problemów, zmian i zadań oczekujących na decyzję.
+- **Jedna wspólna lista zadań rozwojowych** dla użytkownika i Alice. Oboje mogą tworzyć i edytować zadania; Alice może samodzielnie wykrywać problemy w logach/testach, proponować funkcje, dodawać zadania i **zmieniać priorytety również zadań użytkownika**. Historia i uzasadnienie zmian oraz możliwość cofnięcia; opcja zablokowania priorytetu przez użytkownika.
+- Zadania są **wykonywane kolejno, jedno naraz**, bez dynamicznego planowania obciążenia CPU/GPU; podstawowe limity bezpieczeństwa pozostają wskazane. Alice może rozbijać zadania na kroki i utrwalać checkpointy.
+- **Osobny mikroserwis** nocnych zadań rozwojowych, z **trwałą listą/kolejką w bazie danych** (status, priorytet, historia, kroki, checkpointy). **RabbitMQ pozostaje mechanizmem komunikacji między usługami**, a nie magazynem tej listy.
+- Na tym etapie **bez interfejsu w `alice-web`**. Zarządzanie listą przez **API**, dostępne także ręcznie ze skryptów użytkownika z komputera w LAN. Użytkownik nie wymaga uwierzytelniania API ani ograniczenia do jednego adresu IP; **nie wystawiać API publicznie do internetu**. API kolejki **nie daje możliwości zatwierdzania merge ani wdrożeń produkcyjnych**.
+- Uprawnienia, audyt i możliwość natychmiastowego zatrzymania pozostają wymaganiami bezpieczeństwa; samo dodanie zadania nie oznacza zgody na produkcję.
+
+
+### Dalsza realizacja
+- Implementacja mikroserwisu i mechanizmów nocnej pracy pozostaje do wykonania.
