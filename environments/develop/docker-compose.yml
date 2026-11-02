@@ -42,6 +42,7 @@ services:
 
   postgres:
     image: postgres:17
+    command: ["postgres", "-c", "max_connections=200"]
     container_name: ${POSTGRES_CONTAINER_NAME:-alice-dev-postgres}
     hostname: ${POSTGRES_HOSTNAME:-postgres}
     restart: unless-stopped
@@ -145,6 +146,11 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
+      SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: "30000"
+      SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT: "600000"
+      SPRING_DATASOURCE_HIKARI_MAX_LIFETIME: "1800000"
       SERVER_PORT: 8096
       DB_URL: jdbc:postgresql://postgres:5432/${MEDIA_DB_NAME:-media}
       DB_USER: ${MEDIA_DB_USERNAME:-media}
@@ -171,6 +177,11 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
+      SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: "30000"
+      SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT: "600000"
+      SPRING_DATASOURCE_HIKARI_MAX_LIFETIME: "1800000"
       SERVER_PORT: 8081
       WEATHER_DB_URL: jdbc:postgresql://postgres:5432/${WEATHER_DB_NAME:-weather}
       WEATHER_DB_USERNAME: ${WEATHER_DB_USERNAME}
@@ -197,6 +208,11 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
+      SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: "30000"
+      SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT: "600000"
+      SPRING_DATASOURCE_HIKARI_MAX_LIFETIME: "1800000"
       SERVER_PORT: 8082
       TIME_COORDINATOR_DB_URL: jdbc:postgresql://postgres:5432/${TIME_COORDINATOR_DB_NAME:-time_coordinator}
       TIME_COORDINATOR_DB_USERNAME: ${TIME_COORDINATOR_DB_USERNAME}
@@ -242,6 +258,11 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
+      SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: "30000"
+      SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT: "600000"
+      SPRING_DATASOURCE_HIKARI_MAX_LIFETIME: "1800000"
       SERVER_PORT: 8083
       MAIL_DB_URL: jdbc:postgresql://postgres:5432/${MAIL_DB_NAME:-mail}
       MAIL_DB_USERNAME: ${MAIL_DB_USERNAME:-mail}
@@ -275,6 +296,11 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
+      SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: "30000"
+      SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT: "600000"
+      SPRING_DATASOURCE_HIKARI_MAX_LIFETIME: "1800000"
       SERVER_PORT: 8084
       WEATHER_BASE_URL: http://weather-service:8081
       WORK_BASE_URL: http://work-service:8085
@@ -305,6 +331,11 @@ services:
       postgres:
         condition: service_healthy
     environment:
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
+      SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: "30000"
+      SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT: "600000"
+      SPRING_DATASOURCE_HIKARI_MAX_LIFETIME: "1800000"
       SERVER_PORT: 8085
       WORK_DB_URL: jdbc:postgresql://postgres:5432/${WORK_DB_NAME:-work}
       WORK_DB_USERNAME: ${WORK_DB_USERNAME:-work}
@@ -329,6 +360,11 @@ services:
       postgres:
         condition: service_healthy
     environment:
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
+      SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: "30000"
+      SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT: "600000"
+      SPRING_DATASOURCE_HIKARI_MAX_LIFETIME: "1800000"
       SERVER_PORT: 8086
       SHOPPING_DB_URL: jdbc:postgresql://postgres:5432/${SHOPPING_DB_NAME:-shopping}
       SHOPPING_DB_USERNAME: ${SHOPPING_DB_USERNAME:-shopping}
@@ -346,6 +382,11 @@ services:
       postgres:
         condition: service_healthy
     environment:
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
+      SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: "30000"
+      SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT: "600000"
+      SPRING_DATASOURCE_HIKARI_MAX_LIFETIME: "1800000"
       SERVER_PORT: 8087
       KNOWLEDGE_DB_URL: jdbc:postgresql://postgres:5432/${KNOWLEDGE_DB_NAME:-knowledge}
       KNOWLEDGE_DB_USERNAME: ${KNOWLEDGE_DB_USERNAME:-knowledge}
@@ -367,6 +408,11 @@ services:
       postgres:
         condition: service_healthy
     environment:
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
+      SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: "30000"
+      SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT: "600000"
+      SPRING_DATASOURCE_HIKARI_MAX_LIFETIME: "1800000"
       LLM_BASE_URL: http://llm-service:8084
       SERVER_PORT: 8087
       BUDGET_DB_URL: jdbc:postgresql://postgres:5432/${BUDGET_DB_NAME:-budget}
@@ -384,6 +430,11 @@ services:
       postgres:
         condition: service_healthy
     environment:
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
+      SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: "30000"
+      SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT: "600000"
+      SPRING_DATASOURCE_HIKARI_MAX_LIFETIME: "1800000"
       SERVER_PORT: 8089
       HEALTH_DB_URL: jdbc:postgresql://postgres:5432/${HEALTH_DB_NAME:-health}
       HEALTH_DB_USERNAME: ${HEALTH_DB_USERNAME:-health}
