@@ -17,6 +17,7 @@ services:
       SMARTHOME_UPSTREAM: ${ALICE_WEB_SMARTHOME_UPSTREAM:-http://smarthome-service:8091}
       MEDIA_UPSTREAM: ${ALICE_WEB_MEDIA_UPSTREAM:-http://media-service:8096}
       NODES_UPSTREAM: ${ALICE_WEB_NODES_UPSTREAM:-http://node-manager-service:8097}
+      IOT_WORKSHOP_UPSTREAM: ${ALICE_WEB_IOT_WORKSHOP_UPSTREAM:-http://iot-workshop:8080}
     ports:
       - "${ALICE_WEB_BIND_IP:-127.0.0.1}:${ALICE_WEB_PUBLIC_PORT:-19080}:80"
     healthcheck:
@@ -81,6 +82,9 @@ services:
       BUDGET_DB_NAME: ${BUDGET_DB_NAME:-budget}
       BUDGET_DB_USERNAME: ${BUDGET_DB_USERNAME:-budget}
       BUDGET_DB_PASSWORD: ${BUDGET_DB_PASSWORD:-dev-budget}
+      IOT_WORKSHOP_DB_NAME: ${IOT_WORKSHOP_DB_NAME:-iot_workshop}
+      IOT_WORKSHOP_DB_USERNAME: ${IOT_WORKSHOP_DB_USERNAME:-iot_workshop}
+      IOT_WORKSHOP_DB_PASSWORD: ${IOT_WORKSHOP_DB_PASSWORD:-dev-iot-workshop}
     ports:
       - "${POSTGRES_PORT:-55432}:5432"
     volumes:
@@ -133,6 +137,25 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+
+  iot-workshop:
+    build:
+      context: ../../../microservices/iot-workshop
+    container_name: ${IOT_WORKSHOP_CONTAINER_NAME:-alice-dev-iot-workshop}
+    hostname: iot-workshop
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8080
+      DB_URL: jdbc:postgresql://postgres:5432/${IOT_WORKSHOP_DB_NAME:-iot_workshop}
+      DB_USER: ${IOT_WORKSHOP_DB_USERNAME:-iot_workshop}
+      DB_PASSWORD: ${IOT_WORKSHOP_DB_PASSWORD:-dev-iot-workshop}
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
+    ports:
+      - "127.0.0.1:${IOT_WORKSHOP_PUBLIC_PORT:-19098}:8080"
 
   media-service:
     build:
