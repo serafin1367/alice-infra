@@ -32,7 +32,8 @@ $buildServices = @(
     "knowledge-service",
     "health-service",
     "budget-service",
-    "media-service"
+    "media-service",
+    "iot-workshop"
 )
 
 Write-Host "Buduje wszystkie obrazy uslug od nowa, bez cache..." -ForegroundColor Cyan
