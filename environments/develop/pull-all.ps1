@@ -6,6 +6,23 @@ param(
 
 $ErrorActionPreference = "Continue" # Git stderr is handled by exit code, including in Windows PowerShell 5.1.
 $Root = (Resolve-Path -LiteralPath $Root).Path
+
+# A new microservice is not discovered until it has been cloned.
+# Bootstrap only the known IoT Workshop repository; never overwrite an existing directory.
+$workshopPath = Join-Path $Root "microservices/iot-workshop"
+if (-not (Test-Path -LiteralPath $workshopPath)) {
+    $parent = Split-Path -Parent $workshopPath
+    if (-not (Test-Path -LiteralPath $parent)) {
+        New-Item -ItemType Directory -Path $parent -Force | Out-Null
+    }
+    Write-Host "Pobieranie brakujacego repozytorium iot-workshop..." -ForegroundColor Cyan
+    & git clone https://github.com/serafin1367/iot-workshop.git $workshopPath
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "Nie udalo sie sklonowac iot-workshop. Sprawdz dostep do prywatnego repozytorium."
+        exit 1
+    }
+}
+
 $excluded = @(".git", "node_modules", "target", "build", "dist", ".venv", "venv", ".next", ".idea")
 $pending = New-Object System.Collections.Stack
 $pending.Push(@($Root, 0))
@@ -69,7 +86,8 @@ foreach ($repoPath in ($repositories | Sort-Object)) {
 
     $before = (& git -C $repoPath rev-parse HEAD).Trim()
     Write-Host "Galaz: $branch, upstream: $upstream"
-    & git -C $repoPath pull github main --ff-only
+    # Use the configured upstream rather than assuming every checkout has a 'github' remote.
+    & git -C $repoPath pull --ff-only
     if ($LASTEXITCODE -ne 0) {
         Write-Warning "Pull nie powiodl sie. Sprawdz komunikat Git powyzej."
         $failed++
