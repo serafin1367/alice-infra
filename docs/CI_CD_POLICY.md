@@ -39,3 +39,19 @@
 ## 5. Warunek uznania polityki za wdrożoną
 
 Polityka zostaje **technicznie wdrożona** dopiero po sprawdzeniu dla każdego repozytorium: Actions disabled, brak uruchomień GitHub CI, poprawne wykonywanie zadań CI w GitLab oraz udokumentowany właściciel konfiguracji. Brak potwierdzenia oznacza `NIEZWERYFIKOWANE`.
+
+## 6. Usunięcie dotychczasowych workflow (2026-11-08)
+
+Przeprowadzono przegląd katalogów `.github/workflows` na gałęzi `main` w 19 repozytoriach `alice*` oraz `iot-workshop`. Usunięto sześć plików workflow w pięciu repozytoriach:
+
+| Repozytorium | Usunięte workflow |
+| --- | --- |
+| `alice-node` | `media-agent.yml` |
+| `alice-microservices-health` | `health-quality.yml` |
+| `alice-microservices-media` | `build.yml`, `verify.yml` (jeden commit) |
+| `alice-microservices-work` | `maven-quality.yml` |
+| `alice-microservices-node-manager` | `quality.yml` |
+
+Po usunięciu ponownie odczytano ścieżkę `.github/workflows` w pięciu zmodyfikowanych repozytoriach: katalog nie jest dostępny (`404`). W pozostałych 15 nie znaleziono go w trakcie inwentaryzacji.
+
+**Ograniczenie:** brak workflow na `main` nie oznacza administracyjnego wyłączenia GitHub Actions, nie wyklucza workflow na innych gałęziach ani zewnętrznych webhooków. Aby egzekwować zakaz, należy dodatkowo wyłączyć Actions w ustawieniach każdego repozytorium. Nie weryfikowano wykonania workflow w historii po commitach usuwających.
