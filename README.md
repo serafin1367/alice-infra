@@ -21,6 +21,8 @@
 > Dokumenty opisują stan i zamierzenia na 28.10.2026. Sama obecność kodu lub opisu nie oznacza potwierdzenia produkcyjnej gotowości. Roadmapa jest propozycją, a nie harmonogramem zatwierdzonym terminowo.
 
 
+- **[Polityka CI/CD i źródła prawdy](docs/CI_CD_POLICY.md)** — GitLab wyłącznie do CI/CD; GitHub Actions zabronione; `alice-ci-reports` jako źródło wyników i zasady migracji Issues.
+
 ## Audyt aktualności dokumentacji
 
 - **[Audyt dokumentacji i rozbieżności z CI/CD — 30.10.2026](docs/DOCUMENTATION_AUDIT_2026-10-30.md)** — potwierdzone źródła, statusy weryfikacji, znane ograniczenia i kolejność dalszej inwentaryzacji. Bieżące metryki należy zawsze sprawdzać w [centralnym raporcie CI](https://github.com/serafin1367/alice-ci-reports/blob/main/index.json), nie we wcześniejszych migawkach README.
