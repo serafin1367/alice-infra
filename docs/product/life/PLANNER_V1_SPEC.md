@@ -1,7 +1,7 @@
 # Alice Life — Planer V1: specyfikacja funkcjonalna i model danych
 
 **Data opracowania:** 2026-11-10  
-**Status:** specyfikacja rozwijana. Zatwierdzone: sześć źródeł danych oraz lokalny plan roboczy z osobną publikacją do Google Calendar (decyzja 2026-11-10). Pozostałe parametry, w szczególności reguły układania godzin, są propozycjami do akceptacji.  
+**Status:** specyfikacja rozwijana. Zatwierdzone: sześć źródeł danych; lokalny plan roboczy z osobną publikacją do Google Calendar; ramy pracy 08:00–17:00 od poniedziałku do piątku i elastyczne planowanie weekendów (decyzje 2026-11-10). Długości bloków, przerwy, bufory i pozostałe szczegóły algorytmu są nadal propozycjami do akceptacji.  
 **Powiązania:** `docs/PRODUCT_VISION.md` (P2 / Planner V1), `docs/PROJECT_OVERVIEW.md` (Alice Life: planowanie dnia), `docs/product/life/PLANNER_NAVIGATION.md`, `docs/product/assistant/VISION.md`.
 
 ## 1. Cel i granice
@@ -145,13 +145,36 @@ Zatwierdzony jest **automatyczny wieczorny plan kolejnego dnia roboczego**, tak�
 5. Jakie domyślne działania mogą być wykonane bez dodatkowej akceptacji przy ponownym planowaniu?
 
 
+## 12a. Ramy pracy i weekendy — ZATWIERDZONE 2026-11-10
+
+- **Dni pracy zawodowej:** poniedziałek–piątek.
+- **Standardowe okno pracy zawodowej:** **08:00–17:00** w strefie `Europe/Warsaw`.
+- **Weekendy:** planowane **elastycznie**, bez automatycznego przenoszenia na nie standardowego okna pracy zawodowej.
+- Okno 08:00–17:00 określa domyślne ramy planowania **pracy**, a nie granice całego dnia osobistego. Nie oznacza obowiązku ciągłego zapełnienia dziewięciu godzin zadaniami.
+- Spotkania istniejące w kalendarzu poza tym oknem pozostają widoczne i nie podlegają automatycznemu przesuwaniu. Przydzielanie nowych bloków zawodowych poza oknem jest osobną polityką do ustalenia; nie należy domyślnie dodawać nadgodzin.
+- W weekendy Alice może przygotowywać elastyczne propozycje aktywności, rutyn i zadań prywatnych, z zachowaniem terminów i wydarzeń sztywnych. Automatyczne planowanie pracy zawodowej w weekendy wymaga odrębnej decyzji.
+- Nie są jeszcze ustalone: długość bloku skupienia, częstotliwość i długość przerw, godziny posiłków, dzienny bufor, wieczorna pora generowania planu oraz zasady nadgodzin.
+
+### Parametryzacja (zatwierdzone wartości, nie istniejąca konfiguracja aplikacji)
+
+| Parametr | Wartość |
+|---|---|
+| `workdays` | `MON,TUE,WED,THU,FRI` |
+| `workStartLocal` | `08:00` |
+| `workEndLocal` | `17:00` |
+| `timeZone` | `Europe/Warsaw` |
+| `weekendPlanningMode` | `FLEXIBLE` |
+| `focusBlockMinutes` | niezatwierdzone |
+| `breakMinutes` | niezatwierdzone |
+| `dailyBufferMinutes` | niezatwierdzone |
+
 ## 13. Szczegółowe reguły układania harmonogramu — PROPOZYCJA DO UZGODNIENIA (2026-11-10)
 
 ### A. Jednostka planowania i horyzont
 
 - Układać **jeden dzień** w strefie `Europe/Warsaw`; tydzień służy do podglądu obciążenia i terminów, nie do automatycznego wypełniania każdej godziny.
 - Planować najbliższy dzień roboczy wieczorem, również bez wydarzeń kalendarzowych (zgodnie z wcześniejszym zatwierdzonym wymaganiem). Pora generowania jest do ustalenia.
-- Plan obejmuje poranek, bloki pracy, przerwy, obowiązki prywatne i odpoczynek. Godzina rozpoczęcia, maksymalny zakres planowania oraz osobne reguły weekendowe wymagają akceptacji.
+- Plan obejmuje poranek, bloki pracy, przerwy, obowiązki prywatne i odpoczynek. **Zatwierdzone okno pracy to 08:00–17:00, poniedziałek–piątek; weekendy elastyczne (sekcja 12a).** Dalszy zakres dnia osobistego i reguły obsługi wyjątków nadal wymagają ustalenia.
 
 ### B. Kolejność rozmieszczania
 
@@ -194,12 +217,12 @@ Zatwierdzony jest **automatyczny wieczorny plan kolejnego dnia roboczego**, tak�
 
 ### G. Parametry do zatwierdzenia przed implementacją generatora
 
-- Początek i koniec zwykłego dnia roboczego; rozdzielenie pracy i czasu prywatnego.
+- **Zatwierdzono:** standardowe ramy pracy 08:00–17:00, poniedziałek–piątek, weekendy elastyczne. Do ustalenia pozostaje zakres dnia prywatnego i nadgodziny.
 - Dopuszczalny czas pojedynczego bloku skupienia i przerwy między blokami.
 - Minimalny dzienny bufor i sposób traktowania nadmiaru zadań.
 - Polityka zadań bez estymacji i możliwość automatycznego dzielenia dużych zadań.
 - Czy wolno automatycznie nadpisywać roboczy **szkic** po zmianie źródeł; zatwierdzone wersje pozostają historyczne.
-- Różnice między dniami roboczymi i weekendami oraz godzina wieczornego generowania.
+- **Zatwierdzono:** weekendy planowane elastycznie; do ustalenia szczegółowe zasady planowania obowiązków w weekend oraz godzina wieczornego generowania.
 
 ### H. Testy akceptacyjne reguł
 
