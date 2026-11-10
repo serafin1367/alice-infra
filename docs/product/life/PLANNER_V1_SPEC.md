@@ -1,7 +1,7 @@
 # Alice Life — Planer V1: specyfikacja funkcjonalna i model danych
 
 **Data opracowania:** 2026-11-10  
-**Status:** specyfikacja rozwijana. Zatwierdzone: sześć źródeł danych; lokalny plan roboczy z osobną publikacją do Google Calendar; ramy pracy 08:00–17:00 od poniedziałku do piątku i elastyczne planowanie weekendów (decyzje 2026-11-10). Zatwierdzono także maksymalny blok skupienia 90 minut, przerwę między blokami 15 minut i dzienną rezerwę 60 minut. Przerwa obiadowa, dzielenie zadań, estymacja oraz pozostałe szczegóły algorytmu wymagają dalszej akceptacji.  
+**Status:** specyfikacja rozwijana. Zatwierdzone: sześć źródeł danych; lokalny plan roboczy z osobną publikacją do Google Calendar; dostępność zawodowa 08:00–17:00 od poniedziałku do piątku, domyślny koniec zaplanowanej pracy o 16:00, rezerwacja obiadu 16:00–17:00 i elastyczne planowanie weekendów (decyzje 2026-11-10). Zatwierdzono także maksymalny blok skupienia 90 minut, przerwę między blokami 15 minut i dzienną rezerwę 60 minut. Zatwierdzono rezerwację obiadu 16:00–17:00 po pracy; długość faktycznego posiłku w tej godzinie, dzielenie zadań, estymacja oraz pozostałe szczegóły algorytmu wymagają dalszej akceptacji.  
 **Powiązania:** `docs/PRODUCT_VISION.md` (P2 / Planner V1), `docs/PROJECT_OVERVIEW.md` (Alice Life: planowanie dnia), `docs/product/life/PLANNER_NAVIGATION.md`, `docs/product/assistant/VISION.md`.
 
 ## 1. Cel i granice
@@ -148,12 +148,12 @@ Zatwierdzony jest **automatyczny wieczorny plan kolejnego dnia roboczego**, tak�
 ## 12a. Ramy pracy i weekendy — ZATWIERDZONE 2026-11-10
 
 - **Dni pracy zawodowej:** poniedziałek–piątek.
-- **Standardowe okno pracy zawodowej:** **08:00–17:00** w strefie `Europe/Warsaw`.
+- **Okno dostępności zawodowej:** **08:00–17:00** w strefie `Europe/Warsaw`; **domyślne zakończenie planowanych bloków pracy: 16:00**. Odcinek 16:00–17:00 nie jest domyślnie przydzielany nowym zadaniom zawodowym.
 - **Weekendy:** planowane **elastycznie**, bez automatycznego przenoszenia na nie standardowego okna pracy zawodowej.
-- Okno 08:00–17:00 określa domyślne ramy planowania **pracy**, a nie granice całego dnia osobistego. Nie oznacza obowiązku ciągłego zapełnienia dziewięciu godzin zadaniami.
+- Okno 08:00–17:00 oznacza granicę możliwej dostępności zawodowej, nie domyślny dziewięciogodzinny harmonogram. Planer preferuje pracę 08:00–16:00, a przedział 16:00–17:00 chroni jako prywatny czas po pracy. Nie zapełnia automatycznie godzin 16:00–17:00 pracą.
 - Spotkania istniejące w kalendarzu poza tym oknem pozostają widoczne i nie podlegają automatycznemu przesuwaniu. Przydzielanie nowych bloków zawodowych poza oknem jest osobną polityką do ustalenia; nie należy domyślnie dodawać nadgodzin.
 - W weekendy Alice może przygotowywać elastyczne propozycje aktywności, rutyn i zadań prywatnych, z zachowaniem terminów i wydarzeń sztywnych. Automatyczne planowanie pracy zawodowej w weekendy wymaga odrębnej decyzji.
-- Zatwierdzone parametry pracy: maksymalny blok skupienia **90 min**, przerwa pomiędzy blokami **15 min**, dzienna niezaplanowana rezerwa **60 min**. Nadal nie ustalono dłuższej przerwy na posiłek, zasad dzielenia zadań i estymowania czasu, wieczornej pory generowania planu oraz zasad nadgodzin.
+- Zatwierdzone parametry pracy: maksymalny blok skupienia **90 min**, przerwa pomiędzy blokami **15 min**, dzienna niezaplanowana rezerwa **60 min**. **Obiad rezerwowany 16:00–17:00 po domyślnym końcu pracy o 16:00**. Nadal nie ustalono faktycznego czasu trwania posiłku w tym oknie, zasad dzielenia zadań i estymowania czasu, wieczornej pory generowania planu oraz zasad nadgodzin.
 
 ### Parametryzacja (zatwierdzone wartości, nie istniejąca konfiguracja aplikacji)
 
@@ -161,7 +161,11 @@ Zatwierdzony jest **automatyczny wieczorny plan kolejnego dnia roboczego**, tak�
 |---|---|
 | `workdays` | `MON,TUE,WED,THU,FRI` |
 | `workStartLocal` | `08:00` |
-| `workEndLocal` | `17:00` |
+| `workEndLocal` | `17:00` (górna granica dostępności) |
+| `preferredWorkEndLocal` | `16:00` (domyślne zakończenie pracy) |
+| `lunchReservedFromLocal` | `16:00` |
+| `lunchReservedToLocal` | `17:00` |
+| `lunchAfterWork` | `true` |
 | `timeZone` | `Europe/Warsaw` |
 | `weekendPlanningMode` | `FLEXIBLE` |
 | `focusBlockMinutes` | `90` (maksimum) |
@@ -175,7 +179,7 @@ Zatwierdzony jest **automatyczny wieczorny plan kolejnego dnia roboczego**, tak�
 - **Dzienna rezerwa na nieprzewidziane zdarzenia:** **60 minut**. Generator powinien chronić co najmniej tyle niezaplanowanego czasu w standardowym dniu pracy, rozłożonego elastycznie między dostępne okna. Rezerwa nie jest zadaniem do wykonania.
 - Wszystkie trzy parametry stosują się do roboczej propozycji harmonogramu i **nie uprawniają do przesuwania spotkań ani publikacji w Google Calendar**.
 - Przedziały niedostępne z powodu zobowiązań sztywnych pozostają nienaruszone. Jeżeli z powodu spotkań i pilnych terminów nie da się zachować 60-minutowej rezerwy, Alice powinna pokazać konflikt i niedobór bufora, zamiast ukrywać przeciążenie.
-- Przerwa obiadowa, dopuszczalne dzielenie długich zadań i polityka szacowania czasu **nie zostały jeszcze zatwierdzone**.
+- **Zatwierdzono rezerwację obiadu 16:00–17:00 po zakończeniu pracy**, ale nie ustalono dokładnej długości posiłku w tym oknie. Dopuszczalne dzielenie długich zadań i polityka szacowania czasu **nie zostały jeszcze zatwierdzone**.
 
 ### Przykładowa interpretacja — bez narzucania godzin konkretnych sesji
 
@@ -185,6 +189,24 @@ Zatwierdzony jest **automatyczny wieczorny plan kolejnego dnia roboczego**, tak�
 | Krótka przerwa | Między sąsiadującymi blokami skupienia występuje 15 minut nieprzydzielonych do pracy |
 | Bufor | Standardowy dzień zawiera przynajmniej 60 minut czasu niezaplanowanego; brak możliwości jest jawnie sygnalizowany |
 | Publikacja | Parametry lokalnego planu nie zmieniają wydarzeń w Google Calendar |
+
+## 12c. Koniec pracy i obiad — ZATWIERDZONE 2026-11-10
+
+**Decyzja użytkownika:** Alice domyślnie planuje zakończenie pracy o **16:00**, a **16:00–17:00 rezerwuje na obiad po pracy**.
+
+- Dla dni roboczych (poniedziałek–piątek) generator preferuje zadania zawodowe od 08:00 do 16:00; 17:00 jest zachowaną górną granicą dostępności zawodowej, a nie godziną, do której należy zapełniać dzień pracą.
+- Rezerwacja **16:00–17:00** jest blokiem osobistym, a nie 15-minutową przerwą między blokami skupienia, i nie jest częścią dziennej 60-minutowej niezaplanowanej rezerwy na opóźnienia.
+- W domyślnych propozycjach nie umieszczać nowych zadań pracy ani spotkań w godzinach 16:00–17:00. Istniejące zobowiązania z Google Calendar, które kolidują z tym oknem, **pozostają niezmienione**; Planer zgłasza konflikt i proponuje skorygowany lokalny szkic, nie przesuwa spotkania bez osobnej zgody.
+- Nie utożsamiać rezerwacji godzinnej z potwierdzeniem godzinnego posiłku: **czas faktycznego obiadu wewnątrz tego okna pozostaje do ustalenia**. Do czasu doprecyzowania blok 16:00–17:00 jest w całości chroniony.
+- Weekendy są planowane elastycznie; nie narzucać im automatycznie dni roboczych 08:00–16:00 ani rezerwacji 16:00–17:00 bez kolejnej decyzji.
+- Zatwierdzanie lokalnego planu nie publikuje obiadu do Google Calendar. Publikacja, również posiłku, wymaga odrębnej zgody na konkretne operacje.
+
+### Kryteria akceptacji
+
+1. Standardowy poniedziałek bez spotkań: ostatni proponowany blok pracy kończy się najpóźniej o 16:00, a 16:00–17:00 jest zarezerwowane jako czas prywatny na obiad.
+2. Spotkanie Google Calendar 16:30–17:00: pozostaje w kalendarzu bez zmian; Planer sygnalizuje konflikt z rezerwacją obiadu i prezentuje propozycję lokalnego rozwiązania.
+3. Bufor 60 minut nie jest realizowany przez utożsamienie go z godziną obiadową.
+4. Potwierdzenie harmonogramu lokalnego nie tworzy wydarzenia „Obiad” w Google Calendar.
 
 ## 13. Szczegółowe reguły układania harmonogramu — PROPOZYCJA DO UZGODNIENIA (2026-11-10)
 
@@ -235,7 +257,7 @@ Zatwierdzony jest **automatyczny wieczorny plan kolejnego dnia roboczego**, tak�
 
 ### G. Parametry do zatwierdzenia przed implementacją generatora
 
-- **Zatwierdzono:** standardowe ramy pracy 08:00–17:00, poniedziałek–piątek, weekendy elastyczne. Do ustalenia pozostaje zakres dnia prywatnego i nadgodziny.
+- **Zatwierdzono:** dostępność zawodową 08:00–17:00, domyślny koniec pracy o 16:00, rezerwację obiadu 16:00–17:00 po pracy, poniedziałek–piątek, weekendy elastyczne. Do ustalenia pozostają wyjątki i nadgodziny.
 - **Zatwierdzono:** maksymalny blok skupienia 90 minut i 15-minutową krótką przerwę między kolejnymi blokami skupienia. Pozostają do ustalenia wyjątki i długość przerwy obiadowej.
 - **Zatwierdzono:** dzienny bufor 60 minut. Pozostaje do ustalenia sposób rozmieszczenia rezerwy i postępowanie przy jej niedoborze.
 - Polityka zadań bez estymacji i możliwość automatycznego dzielenia dużych zadań.
