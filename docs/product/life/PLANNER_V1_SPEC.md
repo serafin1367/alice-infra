@@ -1,7 +1,7 @@
 # Alice Life — Planer V1: specyfikacja funkcjonalna i model danych
 
 **Data opracowania:** 2026-11-10  
-**Status:** specyfikacja rozwijana. Zatwierdzone: sześć źródeł danych; lokalny plan roboczy z osobną publikacją do Google Calendar; dostępność zawodowa 08:00–17:00 od poniedziałku do piątku, domyślny koniec zaplanowanej pracy o 16:00, rezerwacja obiadu 16:00–17:00 i elastyczne planowanie weekendów (decyzje 2026-11-10). Zatwierdzono także maksymalny blok skupienia 90 minut, przerwę między blokami 15 minut i dzienną rezerwę 60 minut. Zatwierdzono rezerwację obiadu 16:00–17:00 po pracy; długość faktycznego posiłku w tej godzinie, estymacja czasu, oznaczanie podzielności i pozostałe szczegóły algorytmu wymagają dalszej akceptacji.  
+**Status:** specyfikacja rozwijana. Zatwierdzone: sześć źródeł danych; lokalny plan roboczy z osobną publikacją do Google Calendar; dostępność zawodowa 08:00–17:00 od poniedziałku do piątku, domyślny koniec zaplanowanej pracy o 16:00, rezerwacja obiadu 16:00–17:00 i elastyczne planowanie weekendów (decyzje 2026-11-10). Zatwierdzono także maksymalny blok skupienia 90 minut, przerwę między blokami 15 minut i dzienną rezerwę 60 minut. Zatwierdzono rezerwację obiadu 16:00–17:00 po pracy; długość faktycznego posiłku w tej godzinie, oznaczanie podzielności, szczegółowe progi wiarygodności historii i pozostałe parametry algorytmu wymagają dalszej akceptacji.  
 **Powiązania:** `docs/PRODUCT_VISION.md` (P2 / Planner V1), `docs/PROJECT_OVERVIEW.md` (Alice Life: planowanie dnia), `docs/product/life/PLANNER_NAVIGATION.md`, `docs/product/assistant/VISION.md`.
 
 ## 1. Cel i granice
@@ -238,6 +238,31 @@ Podzielne zadanie na 240 minut -> proponowane sesje 90 + 90 + 60 minut, z 15-min
 - Postępowanie z zadaniami bez estymacji.
 - Domyślne oznaczenie `splittable` dla nowych zadań; możliwość ręcznego przełączenia i obsługa zadań niepodzielnych dłuższych niż 90 min.
 
+## 12e. Estymacja i uczenie na rzeczywistym czasie — ZATWIERDZONE 2026-11-10
+
+### Hierarchia estymowania
+
+1. **Ręczna estymacja użytkownika ma bezwarunkowe pierwszeństwo.** Alice nie nadpisuje jej podczas automatycznego przeliczania, synchronizacji ani uczenia; może jedynie zaproponować korektę do osobnego zaakceptowania.
+2. **Wiarygodna historia porównywalnych zadań:** Alice może estymować czas z rzeczywistych, zweryfikowanych pomiarów podobnych ukończonych prac oraz danych zadania (typ, zakres, złożoność). Wykorzystane przykłady i ich aktualność muszą być możliwe do wyjaśnienia.
+3. **Estymacja na podstawie kontekstu zadania:** gdy historia jest niewystarczająca, Alice może wyprowadzić propozycję z opisu i innych dozwolonych informacji, oznaczając jej pochodzenie i niepewność. Ocena LLM nie zastępuje walidacji.
+4. **Wartość domyślna:** gdy danych nadal nie wystarcza, przyjąć **60 minut**, ze stanem **`LOW_CONFIDENCE_DEFAULT`**, nie przedstawiając tej wartości jako sprawdzonego faktu. Użytkownik może ją poprawić.
+
+### Uczenie z wykonania
+
+- **ZATWIERDZONE:** po wykonaniu zadania Alice zestawia zatwierdzony szacunek z rzeczywistym czasem pochodzącym z wiarygodnych pomiarów sesji (start/stop lub inne jawnie dostępne dane). Samo zaplanowanie sesji albo jej odhaczenie **nie stanowi potwierdzenia czasu wykonania**.
+- Rozróżnić `estimatedMinutes` (całość), `actualMinutes` (potwierdzony czas), `remainingMinutes` (pozostały czas, jeśli da się go określić), `estimateOrigin` (`USER/HISTORY/CONTEXT/DEFAULT`), `estimateConfidence` i `estimatedAt`.
+- Dla zadań dzielonych na sesje sumować faktycznie zarejestrowany czas bez podwójnego liczenia wznowień, zachowując powiązanie z jednym zadaniem nadrzędnym.
+- Nie uczyć się z niepełnych, nienadzorowanych lub niejednoznacznych próbek tak, jakby były potwierdzonymi pomiarami. Pokazywać brak wystarczającej historii zamiast deklarować wysoką pewność.
+- Uczenie poprawia **przyszłe propozycje**, ale nigdy nie nadpisuje ręcznego oszacowania użytkownika ani nie zmienia terminów w Google/JIRA/Health.
+- Umożliwić korektę błędnego pomiaru i pominięcie go w statystykach; nie tworzyć historii czasu pracy z wymyślonych wartości.
+
+### Model i testy — wymagania do implementacji
+
+- Rekord pochodzenia estymacji: `estimateOrigin`, `estimateConfidence`, `estimatedMinutes`, `estimateEvidenceRefs`, `estimatedAt`, `userOverride`; opcjonalny `sampleCount` dla historii.
+- Sesja pomiarowa: `sessionId`, `taskRef`, `startedAt`, `stoppedAt`, `actualMinutes`, `source`, `verificationState`, `excludedFromLearning`.
+- Testy: (a) ręczne 120 min nie zostaje nadpisane przez wyliczenie 80 min; (b) brak danych skutkuje 60 min oznaczonymi niepewnie; (c) potwierdzone sesje wpływają na przyszłe sugestie; (d) same bloki w harmonogramie nie zwiększają `actualMinutes`; (e) niepełne i zduplikowane pomiary nie zniekształcają historii.
+- **Do doprecyzowania technicznego:** liczba i podobieństwo próbek wymagane do uznania historii za wiarygodną, metoda odporna na wartości odstające, minimalna dokładność pomiaru, retencja oraz sposób potwierdzania rzeczywistego wykonania.
+
 ## 13. Szczegółowe reguły układania harmonogramu — PROPOZYCJA DO UZGODNIENIA (2026-11-10)
 
 ### A. Jednostka planowania i horyzont
@@ -257,8 +282,8 @@ Podzielne zadanie na 240 minut -> proponowane sesje 90 + 90 + 60 minut, z 15-min
 
 ### C. Estymacja czasu i podział zadań
 
-- `estimatedMinutes` pochodzi kolejno z jawnego ustawienia użytkownika, potwierdzonej historii podobnych zadań albo propozycji Alice oznaczonej jako estymacja.
-- Brak czasu w źródle nie oznacza czasu zerowego. Alice nie może ukryć niepewności; rekomendacja V1: proponować wartość domyślną do korekty i oznaczać ją w UI.
+- **ZATWIERDZONE:** `estimatedMinutes` pochodzi w pierwszej kolejności z ręcznej estymacji użytkownika (której Alice nie nadpisuje), następnie z wiarygodnej historii podobnych ukończonych zadań, a przy braku wystarczających danych z oszacowania Alice na podstawie dostępnego opisu i kontekstu zadania.
+- **ZATWIERDZONE:** gdy historia i kontekst nie pozwalają wiarygodnie oszacować czasu, Alice stosuje **60 minut jako niepewną estymację domyślną**, widoczną i edytowalną w UI. Brak estymacji nie usuwa zadania z planowania; nie oznacza również zerowego czasu. Jeśli użytkownik skoryguje estymację, jego wartość staje się nadrzędna.
 - **ZATWIERDZONE:** zadania wyraźnie oznaczone jako podzielne Alice może automatycznie rozdzielać na sesje o długości do 90 minut, także na różne dni. Zachować jedno zadanie nadrzędne, identyfikator źródła i sumaryczny postęp; nie tworzyć niezależnych zadań ani duplikatów w JIRA lub Google Tasks. Spotkań i zadań niepodzielnych nie dzielić automatycznie. Sposób domyślnego określania podzielności wymaga jeszcze ustalenia.
 - Ograniczyć przełączanie kontekstu: łączyć podobne zadania i zostawiać przejścia między blokami.
 
@@ -290,7 +315,7 @@ Podzielne zadanie na 240 minut -> proponowane sesje 90 + 90 + 60 minut, z 15-min
 - **Zatwierdzono:** dostępność zawodową 08:00–17:00, domyślny koniec pracy o 16:00, rezerwację obiadu 16:00–17:00 po pracy, poniedziałek–piątek, weekendy elastyczne. Do ustalenia pozostają wyjątki i nadgodziny.
 - **Zatwierdzono:** maksymalny blok skupienia 90 minut i 15-minutową krótką przerwę między kolejnymi blokami skupienia. Pozostają do ustalenia wyjątki i długość przerwy obiadowej.
 - **Zatwierdzono:** dzienny bufor 60 minut. Pozostaje do ustalenia sposób rozmieszczenia rezerwy i postępowanie przy jej niedoborze.
-- **Zatwierdzono:** automatyczny podział zadań oznaczonych jako podzielne na sesje maksymalnie 90-minutowe. Do ustalenia pozostają polityka zadań bez estymacji i sposób oznaczania podzielności nowych zadań.
+- **Zatwierdzono:** automatyczny podział zadań oznaczonych jako podzielne na sesje maksymalnie 90-minutowe; automatyczną estymację z hierarchią źródeł i niepewną wartością domyślną 60 min; uczenie na rzeczywistym czasie pracy. Do ustalenia pozostają progi wiarygodności i sposób oznaczania podzielności nowych zadań.
 - Czy wolno automatycznie nadpisywać roboczy **szkic** po zmianie źródeł; zatwierdzone wersje pozostają historyczne.
 - **Zatwierdzono:** weekendy planowane elastycznie; do ustalenia szczegółowe zasady planowania obowiązków w weekend oraz godzina wieczornego generowania.
 
@@ -302,3 +327,61 @@ Podzielne zadanie na 240 minut -> proponowane sesje 90 + 90 + 60 minut, z 15-min
 - Aktualizacja JIRA/Google po zatwierdzeniu dnia oznacza plan jako wymagający przeglądu, nie publikuje ani nie przesuwa automatycznie wydarzeń.
 - Plan bez połączonego Google Calendar nadal można przygotować na bazie pozostałych źródeł; UI wskazuje brakujące dane.
 - Żadna operacja tworzenia czy zatwierdzania lokalnego planu nie wywołuje zapisów do Google Calendar.
+
+## 14. Plan implementacji generatora — KOLEJNE ETAPY (propozycja wykonawcza)
+
+### Etap G0 — inwentaryzacja i kontrakty integracji
+
+- Zweryfikować istniejące API i schematy sześciu źródeł (Time Coordinator / Google, Work/JIRA, Health, nawyki, zadania lokalne), uprawnienia, czasy synchronizacji i identyfikatory źródeł.
+- Osobno zweryfikować, czy istnieje zaufany pomiar rzeczywistego czasu pracy i gdzie można go odczytać; brak takiej integracji wymaga jawnego mechanizmu rejestracji wykonania.
+- Wybrać właściciela trwałego planu po sprawdzeniu aktualnych mikroserwisów, a nie z góry tworzyć nowy.
+- **Odbiór:** macierz źródło → API → model → aktualność → dostępność → ograniczenia, plus diagram odpowiedzialności i lista braków.
+
+### Etap G1 — model danych i kontrolowane API roboczego planu
+
+- Trwałe encje planu dziennego, rewizji, bloków, referencji do zadań i sesji, pomiaru rzeczywistego czasu oraz źródeł estymacji.
+- API odczytu, tworzenia szkicu i lokalnej edycji, blokady rewizji (`If-Match`) i operacji idempotentnych; migracje PostgreSQL i testy repozytorium.
+- **Odbiór:** po restarcie zachowują się bloki, wersje i ręczne estymacje; żadna operacja nie zapisuje danych do Google/JIRA/Health.
+
+### Etap G2 — normalizacja danych sześciu źródeł
+
+- Adaptery zamieniające dane Calendar, Tasks, JIRA, rutyn, Health i lokalnych zadań na jednolity model dostępności, terminów i zadań.
+- Zachowanie `sourceRef`, statusu synchronizacji, identyfikacji duplikatów i czasu ostatniej aktualizacji; odporność na częściowe błędy.
+- **Odbiór:** plan da się utworzyć także przy niedostępnym jednym źródle; dane nie są domyślnie uznawane za aktualne.
+
+### Etap G3 — silnik estymacji, pomiar wykonania i zasady podziału
+
+- Wprowadzić hierarchię **USER → HISTORY → CONTEXT → DEFAULT(60 min, niska pewność)**.
+- Rejestrować faktyczne sesje pracy, tak aby uczenie korzystało tylko z weryfikowalnych pomiarów; zastosować deduplikację sesji i ochronę ręcznych estymacji.
+- Podzielne zadania dzielić automatycznie na bloki maksymalnie 90-minutowe, z zachowaniem nadrzędnego zadania.
+- **Odbiór:** testy z sekcji 12d i 12e, w tym brak fałszywego „rzeczywistego czasu” na podstawie planu.
+
+### Etap G4 — deterministyczny generator harmonogramu
+
+- Najpierw sztywne wydarzenia i chronione okna (preferowane 08:00–16:00 na pracę; 16:00–17:00 obiad), potem przerwy i rutyny, zadania pilne i elastyczne, a także niezaplanowana rezerwa 60 minut.
+- Umieszczać sesje pracy maksymalnie 90 minut, z przerwami 15 minut pomiędzy sąsiadującymi blokami skupienia; pilnować strefy `Europe/Warsaw`, DST oraz końca wyłącznego wydarzeń całodniowych.
+- Konflikty i niemożliwe ograniczenia zwracać wprost (np. zadania w backlogu), nie naruszać spotkań i ręcznych blokad.
+- **Odbiór:** deterministyczne testy przypadków skrajnych; zero niezamierzonych kolizji, zero automatycznych zapisów do usług zewnętrznych.
+
+### Etap G5 — interfejs i zatwierdzanie lokalnego planu
+
+- W `/planner/`: oś czasu, panel niezaplanowanych zadań, pochodzenie i pewność estymacji, edycja i blokowanie sesji, konflikty, historia zmian oraz diff propozycji.
+- Osobny przycisk zatwierdzenia rewizji lokalnej; odrębny przyszły proces publikacji Google.
+- **Odbiór:** użytkownik może poprawić 60-minutową niepewną estymację, przeplanować bloki i zatwierdzić wyłącznie lokalną wersję.
+
+### Etap G6 — automatyczne przygotowanie kolejnego dnia
+
+- Wieczorne generowanie nowego szkicu i poranne podsumowanie w ramach istniejącego systemu koordynacji, z audytem i respektowaniem godzin ciszy.
+- Nie nadpisywać milcząco zatwierdzonego planu; przy zmianach źródeł tworzyć nową propozycję i pokazywać różnice.
+- **Odbiór:** po ponowieniu zadań nie powstają zdublowane plany; poranny raport nie przedstawia nieaktualnych danych jako aktualnych.
+
+### Etap G7 — osobna publikacja Google Calendar (odrębny zakres)
+
+- Podgląd planowanych operacji, wybór docelowego konta/kalendarza, jawne potwierdzenie, kontrola konfliktów i uprawnień, identyfikatory utworzonych wydarzeń, idempotencja oraz raport z częściowych błędów.
+- **Odbiór:** samo zatwierdzenie lokalnego planu nie publikuje niczego; publikacja działa jedynie po osobnej zgodzie.
+
+### Kolejność prac i bramki jakości
+
+- Rozpocząć od G0 i decyzji o odpowiedzialności serwisu; następnie G1 → G2 → G3 → G4 → G5 → G6. G7 dopiero po osobnej akceptacji zakresu.
+- Równolegle do etapów prowadzić testy jednostkowe reguł, testy kontraktowe adapterów i migracji; testy integracyjne ze źródłami uruchamiać w środowisku z wymaganymi zgodami.
+- Nie wdrażać uczenia na podstawie symulowanych pomiarów, nie przedstawiać propozycji API jako istniejących endpointów i nie uznawać dokumentu za implementację.
