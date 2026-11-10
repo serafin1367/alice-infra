@@ -386,6 +386,10 @@ Podzielne zadanie na 240 minut -> proponowane sesje 90 + 90 + 60 minut, z 15-min
 - Równolegle do etapów prowadzić testy jednostkowe reguł, testy kontraktowe adapterów i migracji; testy integracyjne ze źródłami uruchamiać w środowisku z wymaganymi zgodami.
 - Nie wdrażać uczenia na podstawie symulowanych pomiarów, nie przedstawiać propozycji API jako istniejących endpointów i nie uznawać dokumentu za implementację.
 
+## Audyt implementacyjny G0
+
+Wstępny audyt statyczny kodu sześciu źródeł oraz pomiaru czasu udokumentowano w [PLANNER_G0_AUDIT_2026-11-10.md](PLANNER_G0_AUDIT_2026-11-10.md). Kluczowa luka: Work rejestruje sesje **projektu**, bez potwierdzonego powiązania z pojedynczym zadaniem; nie używać ich do estymacji zadań bez mapowania. Rekomendowany właściciel planu V1 to osobny moduł w istniejącym Time Coordinator, pod warunkiem potwierdzenia komunikacji i uprawnień przed G1. Nie jest to potwierdzenie wdrożenia generatora.
+
 ## 15. Hybrydowy pomiar rzeczywistego czasu — ZATWIERDZONE 2026-11-10
 
 - Źródłem rzeczywistego czasu pracy mogą być **wiarygodne pomiary istniejących systemów** (np. zatwierdzone rejestry czasu pracy) albo **ręczny licznik Start / Pauza / Wznów / Zakończ** w Planerze.
