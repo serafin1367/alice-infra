@@ -1,7 +1,7 @@
 # Alice Life — Planer V1: specyfikacja funkcjonalna i model danych
 
 **Data opracowania:** 2026-11-10  
-**Status:** specyfikacja rozwijana. Zatwierdzone: sześć źródeł danych; lokalny plan roboczy z osobną publikacją do Google Calendar; dostępność zawodowa 08:00–17:00 od poniedziałku do piątku, domyślny koniec zaplanowanej pracy o 16:00, rezerwacja obiadu 16:00–17:00 i elastyczne planowanie weekendów (decyzje 2026-11-10). Zatwierdzono także maksymalny blok skupienia 90 minut, przerwę między blokami 15 minut i dzienną rezerwę 60 minut. Zatwierdzono rezerwację obiadu 16:00–17:00 po pracy; długość faktycznego posiłku w tej godzinie, dzielenie zadań, estymacja oraz pozostałe szczegóły algorytmu wymagają dalszej akceptacji.  
+**Status:** specyfikacja rozwijana. Zatwierdzone: sześć źródeł danych; lokalny plan roboczy z osobną publikacją do Google Calendar; dostępność zawodowa 08:00–17:00 od poniedziałku do piątku, domyślny koniec zaplanowanej pracy o 16:00, rezerwacja obiadu 16:00–17:00 i elastyczne planowanie weekendów (decyzje 2026-11-10). Zatwierdzono także maksymalny blok skupienia 90 minut, przerwę między blokami 15 minut i dzienną rezerwę 60 minut. Zatwierdzono rezerwację obiadu 16:00–17:00 po pracy; długość faktycznego posiłku w tej godzinie, estymacja czasu, oznaczanie podzielności i pozostałe szczegóły algorytmu wymagają dalszej akceptacji.  
 **Powiązania:** `docs/PRODUCT_VISION.md` (P2 / Planner V1), `docs/PROJECT_OVERVIEW.md` (Alice Life: planowanie dnia), `docs/product/life/PLANNER_NAVIGATION.md`, `docs/product/assistant/VISION.md`.
 
 ## 1. Cel i granice
@@ -208,6 +208,36 @@ Zatwierdzony jest **automatyczny wieczorny plan kolejnego dnia roboczego**, tak�
 3. Bufor 60 minut nie jest realizowany przez utożsamienie go z godziną obiadową.
 4. Potwierdzenie harmonogramu lokalnego nie tworzy wydarzenia „Obiad” w Google Calendar.
 
+## 12d. Automatyczne dzielenie podzielnych zadań — ZATWIERDZONE 2026-11-10
+
+**Decyzja:** Alice samodzielnie dzieli **zadania oznaczone jako podzielne** na sesje robocze nieprzekraczające **90 minut**, bez potrzeby odrębnej akceptacji każdego podziału w lokalnym szkicu.
+
+### Reguły obowiązujące
+
+1. Podział dotyczy tylko zadań z `splittable=true` (lub równoważnym jawnie ustalonym atrybutem). Nie wolno przyjmować, że każde długie zadanie jest podzielne. Sposób domyślnego ustawiania tego atrybutu wymaga osobnej decyzji.
+2. Podział tworzy **bloki planu**, a nie osobne zadania źródłowe. Wszystkie sesje odnoszą się do jednego `sourceType/sourceId` lub `personalTaskId` i do wspólnej estymacji czasu zadania.
+3. Każda sesja mieści się w przyjętych granicach pracy i ma długość do 90 min. Między kolejnymi blokami skupienia zapewnić ustaloną przerwę 15 min; nie zużywać w ten sposób 60-minutowej niezaplanowanej rezerwy.
+4. Dopuszczalne jest rozmieszczenie sesji w kilku dniach, jeżeli wymagają tego wolne okna lub termin zadania. Planer wskazuje nieschedulowaną resztę, a nie udaje ukończenia pracy.
+5. Zachować jeden status zadania i łączny postęp, bazując na zweryfikowanym wykonaniu sesji. Rozmieszczenie sesji w szkicu nie oznacza wykonania zadania.
+6. Spotkania stałe oraz zadania oznaczone jako niepodzielne nie są dzielone automatycznie. Przy braku informacji o podzielności Planer oznacza zadanie jako wymagające decyzji; nie wymusza podziału.
+7. Podział i przesuwanie sesji są **lokalnymi operacjami szkicu**. Nie zmieniają JIRA, Google Tasks ani Google Calendar i nie obchodzą oddzielnego zatwierdzenia publikacji.
+
+### Model danych — uzupełnienie propozycji
+
+- Zadanie: `splittable` (wartość jawna; nieznane dopóki nieustalone), `estimatedMinutes`, `remainingMinutes` (gdy dane dostępne).
+- Sesja: `taskRef`, `sessionOrdinal`, `scheduledMinutes`, `startAt`, `endAt`, `planRevision`, `executionState`.
+- Inwariant: suma minut zaplanowanych aktywnych sesji nie przekracza świadomie przyjętej pozostałej estymacji, chyba że UI pokazuje powód i korektę oszacowania.
+
+### Przykład akceptacyjny
+
+Podzielne zadanie na 240 minut -> proponowane sesje 90 + 90 + 60 minut, z 15-minutowymi przerwami pomiędzy sąsiadującymi sesjami skupienia. Jeżeli w bieżącym dniu jest tylko 90 minut dostępności, pozostałe 150 minut trzeba przenieść do kolejnych wolnych okien lub do kolejki niezaplanowanych.
+
+### Do doprecyzowania podczas estymacji
+
+- Źródło i pewność oszacowania całkowitego oraz pozostałego czasu.
+- Postępowanie z zadaniami bez estymacji.
+- Domyślne oznaczenie `splittable` dla nowych zadań; możliwość ręcznego przełączenia i obsługa zadań niepodzielnych dłuższych niż 90 min.
+
 ## 13. Szczegółowe reguły układania harmonogramu — PROPOZYCJA DO UZGODNIENIA (2026-11-10)
 
 ### A. Jednostka planowania i horyzont
@@ -229,7 +259,7 @@ Zatwierdzony jest **automatyczny wieczorny plan kolejnego dnia roboczego**, tak�
 
 - `estimatedMinutes` pochodzi kolejno z jawnego ustawienia użytkownika, potwierdzonej historii podobnych zadań albo propozycji Alice oznaczonej jako estymacja.
 - Brak czasu w źródle nie oznacza czasu zerowego. Alice nie może ukryć niepewności; rekomendacja V1: proponować wartość domyślną do korekty i oznaczać ją w UI.
-- Zadanie dłuższe niż dopuszczalny blok można podzielić na sesje; nie dzielić automatycznie spotkań ani zadań oznaczonych jako niepodzielne.
+- **ZATWIERDZONE:** zadania wyraźnie oznaczone jako podzielne Alice może automatycznie rozdzielać na sesje o długości do 90 minut, także na różne dni. Zachować jedno zadanie nadrzędne, identyfikator źródła i sumaryczny postęp; nie tworzyć niezależnych zadań ani duplikatów w JIRA lub Google Tasks. Spotkań i zadań niepodzielnych nie dzielić automatycznie. Sposób domyślnego określania podzielności wymaga jeszcze ustalenia.
 - Ograniczyć przełączanie kontekstu: łączyć podobne zadania i zostawiać przejścia między blokami.
 
 ### D. Przerwy, praca i zdrowie
@@ -260,7 +290,7 @@ Zatwierdzony jest **automatyczny wieczorny plan kolejnego dnia roboczego**, tak�
 - **Zatwierdzono:** dostępność zawodową 08:00–17:00, domyślny koniec pracy o 16:00, rezerwację obiadu 16:00–17:00 po pracy, poniedziałek–piątek, weekendy elastyczne. Do ustalenia pozostają wyjątki i nadgodziny.
 - **Zatwierdzono:** maksymalny blok skupienia 90 minut i 15-minutową krótką przerwę między kolejnymi blokami skupienia. Pozostają do ustalenia wyjątki i długość przerwy obiadowej.
 - **Zatwierdzono:** dzienny bufor 60 minut. Pozostaje do ustalenia sposób rozmieszczenia rezerwy i postępowanie przy jej niedoborze.
-- Polityka zadań bez estymacji i możliwość automatycznego dzielenia dużych zadań.
+- **Zatwierdzono:** automatyczny podział zadań oznaczonych jako podzielne na sesje maksymalnie 90-minutowe. Do ustalenia pozostają polityka zadań bez estymacji i sposób oznaczania podzielności nowych zadań.
 - Czy wolno automatycznie nadpisywać roboczy **szkic** po zmianie źródeł; zatwierdzone wersje pozostają historyczne.
 - **Zatwierdzono:** weekendy planowane elastycznie; do ustalenia szczegółowe zasady planowania obowiązków w weekend oraz godzina wieczornego generowania.
 
