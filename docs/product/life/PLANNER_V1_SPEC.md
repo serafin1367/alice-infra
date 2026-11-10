@@ -385,3 +385,14 @@ Podzielne zadanie na 240 minut -> proponowane sesje 90 + 90 + 60 minut, z 15-min
 - Rozpocząć od G0 i decyzji o odpowiedzialności serwisu; następnie G1 → G2 → G3 → G4 → G5 → G6. G7 dopiero po osobnej akceptacji zakresu.
 - Równolegle do etapów prowadzić testy jednostkowe reguł, testy kontraktowe adapterów i migracji; testy integracyjne ze źródłami uruchamiać w środowisku z wymaganymi zgodami.
 - Nie wdrażać uczenia na podstawie symulowanych pomiarów, nie przedstawiać propozycji API jako istniejących endpointów i nie uznawać dokumentu za implementację.
+
+## 15. Hybrydowy pomiar rzeczywistego czasu — ZATWIERDZONE 2026-11-10
+
+- Źródłem rzeczywistego czasu pracy mogą być **wiarygodne pomiary istniejących systemów** (np. zatwierdzone rejestry czasu pracy) albo **ręczny licznik Start / Pauza / Wznów / Zakończ** w Planerze.
+- Jeżeli pomiar automatyczny jest niedostępny lub niewiarygodny, użytkownik może uruchomić i zatrzymać licznik ręcznie; brak pomiaru nie oznacza zera minut.
+- Planer musi przechowywać pochodzenie, przedziały czasu, stan sesji i wiarygodność. Sesje dla tego samego zadania z różnych źródeł nie mogą być sumowane podwójnie; wymagają uzgodnienia pokrywających się przedziałów.
+- Automatyczny odczyt z integracji oznacza **pobranie zaobserwowanego czasu**, a nie prawo do uruchamiania zewnętrznych liczników czy aktualizacji JIRA bez zgody.
+- Dopuszcza się **ręczną korektę** rzeczywistego czasu, z audytem i możliwością wykluczenia błędnego pomiaru z uczenia.
+- Tylko wiarygodne, ukończone i niedublujące się sesje mogą zasilać estymację przyszłych zadań; samo zaplanowanie zadania i status ukończenia nie stanowią pomiaru.
+- Szczegółowe kontrakty integracji, reguły rozstrzygania nakładania się sesji i dopuszczalne automatyczne źródła pomiarów zostaną określone na podstawie audytu G0.
+
