@@ -1,7 +1,7 @@
 # Alice Life — Planer V1: specyfikacja funkcjonalna i model danych
 
 **Data opracowania:** 2026-11-10  
-**Status:** projekt do uzgodnienia. Zatwierdzone jest sześć źródeł danych; pozostałe parametry w tym dokumencie są propozycjami, dopóki użytkownik ich nie zaakceptuje.  
+**Status:** specyfikacja rozwijana. Zatwierdzone: sześć źródeł danych oraz lokalny plan roboczy z osobną publikacją do Google Calendar (decyzja 2026-11-10). Pozostałe parametry, w szczególności reguły układania godzin, są propozycjami do akceptacji.  
 **Powiązania:** `docs/PRODUCT_VISION.md` (P2 / Planner V1), `docs/PROJECT_OVERVIEW.md` (Alice Life: planowanie dnia), `docs/product/life/PLANNER_NAVIGATION.md`, `docs/product/assistant/VISION.md`.
 
 ## 1. Cel i granice
@@ -22,6 +22,20 @@ Główna strona: `/planner/`, nawigacja w sekcji Kalendarza i skrót z „Dzisia
 | Własne zadania Planera | Zadania nieprzypisane do usług zewnętrznych | Własne trwałe rekordy Alice Life |
 
 Dostęp do każdej integracji musi być niezależny; awaria jednej nie ukrywa innych. Informacja o nieaktualnych danych ma być widoczna.
+
+## 2a. Granica zatwierdzania i publikacji — ZATWIERDZONE 2026-11-10
+
+**Wybrany wariant: plan lokalny z osobną publikacją do Google Calendar.**
+
+1. Alice może automatycznie przygotować i aktualizować **roboczy szkic** harmonogramu przechowywany w AliceAI, z wersjami i historią zmian.
+2. Użytkownik przegląda i zatwierdza lokalny plan roboczy. Zatwierdzenie dotyczy wyłącznie wewnętrznego planu AliceAI — nie jest poleceniem publikacji.
+3. Zewnętrzny kalendarz Google pozostaje źródłem istniejących wydarzeń. Alice nie przesuwa, nie tworzy i nie usuwa wydarzeń Google wskutek wygenerowania, edycji czy zatwierdzenia planu lokalnego.
+4. Publikacja **wybranych** bloków do Google Calendar wymaga oddzielnego podglądu zmian, wskazania konta i kalendarza oraz jawnego potwierdzenia przez użytkownika. Weryfikacja praw dostępu i aktualności danych następuje ponownie przed zapisem.
+5. Zatwierdzenie lub publikacja planu nie aktualizują automatycznie statusów Google Tasks/JIRA ani danych Alice Health.
+6. Konflikt między zatwierdzonym lokalnym planem a późniejszą zmianą kalendarza oznacza potrzebę przeplanowania lub przeglądu, a nie zgodę na nadpisanie wydarzenia.
+7. Po publikacji trzeba zapisać identyfikatory utworzonych wydarzeń i dziennik wykonanych operacji, aby ponowienie nie tworzyło duplikatów.
+
+Konsekwencja dla UI: osobne działania **„Zatwierdź plan”** i **„Publikuj do Google Calendar”**; drugie nie może być domyślnie uruchamiane przez pierwsze.
 
 ## 3. Jednostki planowania — PROPOZYCJA
 
@@ -66,9 +80,9 @@ Algorytm V1 powinien być deterministyczny, testowalny i niezależny od dostępn
 | Odczyt danych z wybranych źródeł | W ramach uprawnień integracji |
 | Wygenerowanie propozycji planu | Dozwolone automatycznie |
 | Modyfikacja szkicu planu roboczego | Dozwolona, wersjonowana |
-| Zatwierdzenie planu roboczego | Jawna akcja użytkownika |
+| Zatwierdzenie planu roboczego | Jawna akcja użytkownika; dotyczy wyłącznie lokalnego planu (ZATWIERDZONE) |
 | Przeniesienie spotkania Google Calendar | Wymagana osobna zgoda na konkretną zmianę |
-| Publikacja bloków do Google Calendar | Osobna zgoda z podglądem operacji |
+| Publikacja bloków do Google Calendar | Osobna zgoda z podglądem operacji (ZATWIERDZONE) |
 | Zmiana statusów Google Tasks/JIRA | Odrębna akcja użytkownika, nie skutek zatwierdzenia planu |
 | Nadpisanie danych Health/nawyków | Nie wykonywać automatycznie |
 
@@ -124,8 +138,74 @@ Zatwierdzony jest **automatyczny wieczorny plan kolejnego dnia roboczego**, tak�
 
 ## 12. Otwarte decyzje dla użytkownika
 
-1. Czy zaaprobowany plan roboczy ma **pozostać wyłącznie w AliceAI**, a publikacja Google być oddzielną operacją (rekomendacja)?
+1. **Rozstrzygnięte:** lokalny plan roboczy i odrębna, jawnie zatwierdzana publikacja Google Calendar (2026-11-10).
 2. Czy podstawową jednostką jest dzień, a tydzień wyłącznie przeglądem (rekomendacja na V1)?
 3. Jak traktować zadania bez estymacji: zaproponować domyślny czas, zapytać, czy odłożyć do backlogu?
 4. Jakie są ramy pracy i odpoczynku dla dni roboczych i weekendów?
 5. Jakie domyślne działania mogą być wykonane bez dodatkowej akceptacji przy ponownym planowaniu?
+
+
+## 13. Szczegółowe reguły układania harmonogramu — PROPOZYCJA DO UZGODNIENIA (2026-11-10)
+
+### A. Jednostka planowania i horyzont
+
+- Układać **jeden dzień** w strefie `Europe/Warsaw`; tydzień służy do podglądu obciążenia i terminów, nie do automatycznego wypełniania każdej godziny.
+- Planować najbliższy dzień roboczy wieczorem, również bez wydarzeń kalendarzowych (zgodnie z wcześniejszym zatwierdzonym wymaganiem). Pora generowania jest do ustalenia.
+- Plan obejmuje poranek, bloki pracy, przerwy, obowiązki prywatne i odpoczynek. Godzina rozpoczęcia, maksymalny zakres planowania oraz osobne reguły weekendowe wymagają akceptacji.
+
+### B. Kolejność rozmieszczania
+
+1. **Zablokowane godziny / wydarzenia stałe**: zajęte terminy Google Calendar, nieprzesuwalne zobowiązania i ręcznie zablokowane bloki — nie przesuwać automatycznie.
+2. **Nieprzekraczalne ograniczenia**: terminy końcowe, obowiązkowe przerwy, limity długości dnia, wskazane okna niedostępności.
+3. **Rutyny zaakceptowane przez użytkownika**: posiłki, spacer, siłownia i odpoczynek; jeżeli nie są sztywne, można przesuwać je w określonym oknie.
+4. **Zadania terminowe i o wyższym priorytecie**: najpierw najpilniejsze w ramach możliwego zakresu czasu; priorytet nie może usuwać stałych zobowiązań.
+5. **Pozostałe zadania elastyczne**: wypełniać wolne okna zgodnie z estymacją i kontekstem pracy.
+6. **Rezerwy**: pozostawić wolne przedziały, nie zagospodarowywać automatycznie całej dostępności.
+
+### C. Estymacja czasu i podział zadań
+
+- `estimatedMinutes` pochodzi kolejno z jawnego ustawienia użytkownika, potwierdzonej historii podobnych zadań albo propozycji Alice oznaczonej jako estymacja.
+- Brak czasu w źródle nie oznacza czasu zerowego. Alice nie może ukryć niepewności; rekomendacja V1: proponować wartość domyślną do korekty i oznaczać ją w UI.
+- Zadanie dłuższe niż dopuszczalny blok można podzielić na sesje; nie dzielić automatycznie spotkań ani zadań oznaczonych jako niepodzielne.
+- Ograniczyć przełączanie kontekstu: łączyć podobne zadania i zostawiać przejścia między blokami.
+
+### D. Przerwy, praca i zdrowie
+
+- Preferować bloki skupienia w ustalonych godzinach pracy; nie narzucać pracy poza zadeklarowanym zakresem.
+- Wstawiać przerwy i czas na posiłki zgodnie z zatwierdzonym rytmem; ich długość i elastyczność do ustalenia.
+- Aktywności Health są sugestiami i ograniczeniami osobistymi, a nie automatyczną diagnozą ani poleceniem zmiany danych zdrowotnych.
+- Nadmiar zadań pozostawić w widocznym backlogu z informacją, dlaczego nie trafiły do harmonogramu.
+
+### E. Konflikty i ponowne planowanie
+
+- Konflikt stałych zdarzeń zgłosić jako problem wejściowy; nie przesuwać ich bez zgody.
+- Konflikt propozycji elastycznych: najpierw przesuwać najmniej pilne, ewentualnie skracać lub dzielić tylko wtedy, gdy użytkownik dopuścił taką zmianę.
+- W razie nowego spotkania lub zmiany deadline'u odświeżyć stan źródeł, porównać rewizję i utworzyć **nową propozycję lokalnego planu**, bez modyfikowania Google.
+- Zabezpieczyć ręczne bloki zablokowane przez użytkownika przed automatycznym przeplanowaniem.
+- Nie zmieniać zatwierdzonej rewizji po cichu; proponowane aktualizacje mają widoczny diff i uzasadnienie.
+
+### F. Kryteria optymalizacji — proponowana kolejność
+
+1. Zero naruszeń zablokowanych zdarzeń i granic uprawnień.
+2. Jak najwięcej zadań terminowych ukończonych przed deadline'ami.
+3. Realistyczna długość dnia, przerwy i wystarczające bufory.
+4. Mniej przełączeń kontekstu i mniej rozdrobnionych bloków.
+5. Dopasowanie do potwierdzonych preferencji oraz przewidywanego poziomu energii.
+
+### G. Parametry do zatwierdzenia przed implementacją generatora
+
+- Początek i koniec zwykłego dnia roboczego; rozdzielenie pracy i czasu prywatnego.
+- Dopuszczalny czas pojedynczego bloku skupienia i przerwy między blokami.
+- Minimalny dzienny bufor i sposób traktowania nadmiaru zadań.
+- Polityka zadań bez estymacji i możliwość automatycznego dzielenia dużych zadań.
+- Czy wolno automatycznie nadpisywać roboczy **szkic** po zmianie źródeł; zatwierdzone wersje pozostają historyczne.
+- Różnice między dniami roboczymi i weekendami oraz godzina wieczornego generowania.
+
+### H. Testy akceptacyjne reguł
+
+- Trzy spotkania przecinają preferowany blok pracy: generator nie przesuwa spotkań, lecz rozkłada pracę w pozostałym czasie.
+- Dwa pilne zadania konkurują o jeden wolny slot: generator pokazuje konflikt i nie planuje obu na tę samą godzinę.
+- Zadania bez czasu trwania otrzymują czytelną propozycję estymacji lub trafiają na listę wymagającą decyzji, a nie znikają.
+- Aktualizacja JIRA/Google po zatwierdzeniu dnia oznacza plan jako wymagający przeglądu, nie publikuje ani nie przesuwa automatycznie wydarzeń.
+- Plan bez połączonego Google Calendar nadal można przygotować na bazie pozostałych źródeł; UI wskazuje brakujące dane.
+- Żadna operacja tworzenia czy zatwierdzania lokalnego planu nie wywołuje zapisów do Google Calendar.
