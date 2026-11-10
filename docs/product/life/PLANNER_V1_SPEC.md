@@ -1,7 +1,7 @@
 # Alice Life — Planer V1: specyfikacja funkcjonalna i model danych
 
 **Data opracowania:** 2026-11-10  
-**Status:** specyfikacja rozwijana. Zatwierdzone: sześć źródeł danych; lokalny plan roboczy z osobną publikacją do Google Calendar; ramy pracy 08:00–17:00 od poniedziałku do piątku i elastyczne planowanie weekendów (decyzje 2026-11-10). Długości bloków, przerwy, bufory i pozostałe szczegóły algorytmu są nadal propozycjami do akceptacji.  
+**Status:** specyfikacja rozwijana. Zatwierdzone: sześć źródeł danych; lokalny plan roboczy z osobną publikacją do Google Calendar; ramy pracy 08:00–17:00 od poniedziałku do piątku i elastyczne planowanie weekendów (decyzje 2026-11-10). Zatwierdzono także maksymalny blok skupienia 90 minut, przerwę między blokami 15 minut i dzienną rezerwę 60 minut. Przerwa obiadowa, dzielenie zadań, estymacja oraz pozostałe szczegóły algorytmu wymagają dalszej akceptacji.  
 **Powiązania:** `docs/PRODUCT_VISION.md` (P2 / Planner V1), `docs/PROJECT_OVERVIEW.md` (Alice Life: planowanie dnia), `docs/product/life/PLANNER_NAVIGATION.md`, `docs/product/assistant/VISION.md`.
 
 ## 1. Cel i granice
@@ -153,7 +153,7 @@ Zatwierdzony jest **automatyczny wieczorny plan kolejnego dnia roboczego**, tak�
 - Okno 08:00–17:00 określa domyślne ramy planowania **pracy**, a nie granice całego dnia osobistego. Nie oznacza obowiązku ciągłego zapełnienia dziewięciu godzin zadaniami.
 - Spotkania istniejące w kalendarzu poza tym oknem pozostają widoczne i nie podlegają automatycznemu przesuwaniu. Przydzielanie nowych bloków zawodowych poza oknem jest osobną polityką do ustalenia; nie należy domyślnie dodawać nadgodzin.
 - W weekendy Alice może przygotowywać elastyczne propozycje aktywności, rutyn i zadań prywatnych, z zachowaniem terminów i wydarzeń sztywnych. Automatyczne planowanie pracy zawodowej w weekendy wymaga odrębnej decyzji.
-- Nie są jeszcze ustalone: długość bloku skupienia, częstotliwość i długość przerw, godziny posiłków, dzienny bufor, wieczorna pora generowania planu oraz zasady nadgodzin.
+- Zatwierdzone parametry pracy: maksymalny blok skupienia **90 min**, przerwa pomiędzy blokami **15 min**, dzienna niezaplanowana rezerwa **60 min**. Nadal nie ustalono dłuższej przerwy na posiłek, zasad dzielenia zadań i estymowania czasu, wieczornej pory generowania planu oraz zasad nadgodzin.
 
 ### Parametryzacja (zatwierdzone wartości, nie istniejąca konfiguracja aplikacji)
 
@@ -164,9 +164,27 @@ Zatwierdzony jest **automatyczny wieczorny plan kolejnego dnia roboczego**, tak�
 | `workEndLocal` | `17:00` |
 | `timeZone` | `Europe/Warsaw` |
 | `weekendPlanningMode` | `FLEXIBLE` |
-| `focusBlockMinutes` | niezatwierdzone |
-| `breakMinutes` | niezatwierdzone |
-| `dailyBufferMinutes` | niezatwierdzone |
+| `focusBlockMinutes` | `90` (maksimum) |
+| `breakMinutes` | `15` (między blokami skupienia) |
+| `dailyBufferMinutes` | `60` (łącznie na dzień roboczy) |
+
+## 12b. Bloki skupienia, krótkie przerwy i rezerwa — ZATWIERDZONE 2026-11-10
+
+- **Maksymalna długość pojedynczego bloku skupienia:** **90 minut**. To limit preferowany przez generator, a nie narzucony minimalny czas ani automatyczny nakaz dzielenia każdej aktywności dokładnie co 90 minut.
+- **Przerwa między kolejnymi blokami skupienia:** **15 minut**. Nie dotyczy automatycznie krótkich spotkań, już istniejących wydarzeń ani przerwy obiadowej; sposób uwzględniania takich wyjątków zostanie doprecyzowany.
+- **Dzienna rezerwa na nieprzewidziane zdarzenia:** **60 minut**. Generator powinien chronić co najmniej tyle niezaplanowanego czasu w standardowym dniu pracy, rozłożonego elastycznie między dostępne okna. Rezerwa nie jest zadaniem do wykonania.
+- Wszystkie trzy parametry stosują się do roboczej propozycji harmonogramu i **nie uprawniają do przesuwania spotkań ani publikacji w Google Calendar**.
+- Przedziały niedostępne z powodu zobowiązań sztywnych pozostają nienaruszone. Jeżeli z powodu spotkań i pilnych terminów nie da się zachować 60-minutowej rezerwy, Alice powinna pokazać konflikt i niedobór bufora, zamiast ukrywać przeciążenie.
+- Przerwa obiadowa, dopuszczalne dzielenie długich zadań i polityka szacowania czasu **nie zostały jeszcze zatwierdzone**.
+
+### Przykładowa interpretacja — bez narzucania godzin konkretnych sesji
+
+| Reguła | Warunek akceptacyjny |
+|---|---|
+| Blok skupienia | Żaden automatycznie proponowany ciągły blok pracy skupionej nie przekracza 90 minut |
+| Krótka przerwa | Między sąsiadującymi blokami skupienia występuje 15 minut nieprzydzielonych do pracy |
+| Bufor | Standardowy dzień zawiera przynajmniej 60 minut czasu niezaplanowanego; brak możliwości jest jawnie sygnalizowany |
+| Publikacja | Parametry lokalnego planu nie zmieniają wydarzeń w Google Calendar |
 
 ## 13. Szczegółowe reguły układania harmonogramu — PROPOZYCJA DO UZGODNIENIA (2026-11-10)
 
@@ -218,8 +236,8 @@ Zatwierdzony jest **automatyczny wieczorny plan kolejnego dnia roboczego**, tak�
 ### G. Parametry do zatwierdzenia przed implementacją generatora
 
 - **Zatwierdzono:** standardowe ramy pracy 08:00–17:00, poniedziałek–piątek, weekendy elastyczne. Do ustalenia pozostaje zakres dnia prywatnego i nadgodziny.
-- Dopuszczalny czas pojedynczego bloku skupienia i przerwy między blokami.
-- Minimalny dzienny bufor i sposób traktowania nadmiaru zadań.
+- **Zatwierdzono:** maksymalny blok skupienia 90 minut i 15-minutową krótką przerwę między kolejnymi blokami skupienia. Pozostają do ustalenia wyjątki i długość przerwy obiadowej.
+- **Zatwierdzono:** dzienny bufor 60 minut. Pozostaje do ustalenia sposób rozmieszczenia rezerwy i postępowanie przy jej niedoborze.
 - Polityka zadań bez estymacji i możliwość automatycznego dzielenia dużych zadań.
 - Czy wolno automatycznie nadpisywać roboczy **szkic** po zmianie źródeł; zatwierdzone wersje pozostają historyczne.
 - **Zatwierdzono:** weekendy planowane elastycznie; do ustalenia szczegółowe zasady planowania obowiązków w weekend oraz godzina wieczornego generowania.
