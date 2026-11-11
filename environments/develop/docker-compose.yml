@@ -185,6 +185,7 @@ services:
       RABBITMQ_VHOST: ${RABBITMQ_VHOST:-alice}
       ALICE_ANILIST_ENABLED: "true"
       ALICE_MEDIA_LLM_BASE_URL: http://llm-service:8084
+      TMDB_ACCESS_TOKEN: ${TMDB_ACCESS_TOKEN:-}
     ports:
       - "127.0.0.1:${MEDIA_PUBLIC_PORT:-19096}:8096"
 
