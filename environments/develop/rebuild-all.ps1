@@ -39,13 +39,16 @@ $buildServices = @(
 # Docker Compose may otherwise build independent Maven services concurrently.
 # Keep caching enabled; --no-cache redownloads all Maven dependencies on every run.
 $previousParallelLimit = [Environment]::GetEnvironmentVariable("COMPOSE_PARALLEL_LIMIT", "Process")
+$previousDockerBuildKit = [Environment]::GetEnvironmentVariable("DOCKER_BUILDKIT", "Process")
 $env:COMPOSE_PARALLEL_LIMIT = "1"
+$env:DOCKER_BUILDKIT = "1"
 Write-Host "Buduje uslugi kolejno, z cache Maven i Docker (COMPOSE_PARALLEL_LIMIT=1)..." -ForegroundColor Cyan
 try {
     & docker @composeBaseArguments build @buildServices
     $buildExitCode = $LASTEXITCODE
 } finally {
     [Environment]::SetEnvironmentVariable("COMPOSE_PARALLEL_LIMIT", $previousParallelLimit, "Process")
+    [Environment]::SetEnvironmentVariable("DOCKER_BUILDKIT", $previousDockerBuildKit, "Process")
 }
 if ($buildExitCode -ne 0) {
     throw "Budowanie obrazow zakonczone kodem $buildExitCode."
