@@ -206,6 +206,49 @@ Potwierdzony wcześniej kontrolowany import Ars Technica zapisał 20 nowych
 artykułów na DEV. Nie dowodzi to dostępności innych źródeł RSS ani działania
 automatycznego harmonogramu. Ten etap nie dotyka produkcji.
 
+## Tłumaczenie tytułów na polski przez Alice LLM
+
+Alice News zapisuje oryginalny tytuł w `news_article.title`, a tłumaczenie
+w `news_article.title_pl`. API artykułów pokazuje polski tytuł, gdy jest dostępny,
+ale zachowuje również `originalTitle` i `translationStatus`.
+Alice Web oznacza tytuły przetłumaczone przez AI i pozwala podejrzeć oryginał.
+
+Przetwarzanie odbywa się przez istniejący profil Alice LLM. Nie korzystamy
+z osobnej usługi tłumaczącej i nie wysyłamy tytułów do losowego dostawcy.
+
+**Bezpieczny test jednej partii bez włączania harmonogramu:**
+
+1. Pobierz najnowszy kod `alice-news-service` i `alice-infra`.
+2. W katalogu `environments/develop` wykonaj:
+   ```powershell
+   .\enrich-news.ps1 -ListProfiles
+   ```
+   Wyświetli to identyfikatory, nazwy i modele istniejących profili LLM
+   bez uruchamiania generowania.
+3. W prywatnym `.env` ustaw `NEWS_LLM_PROFILE_ID` na **rzeczywiste ID**
+   działającego profilu z listy. Dodaj `NEWS_ENRICHMENT_BATCH_SIZE=2`.
+   Pozostaw `NEWS_ENRICHMENT_ENABLED=false` i `NEWS_RSS_ENABLED=false`.
+4. Przebuduj i odtwórz **wyłącznie** News, aby wykorzystać ręczne API:
+   ```powershell
+   docker compose --env-file .env up -d --build --no-deps --force-recreate --wait news-service
+   ```
+5. Uruchom:
+   ```powershell
+   .\enrich-news.ps1
+   ```
+   Skrypt sprawdza gotowość News oraz istnienie wskazanego profilu,
+   wymaga wpisania `TAK` i pobiera `NEWS_ADMIN_TOKEN` niewidocznie
+   z terminala. Wykonuje **jedno** autoryzowane żądanie
+   `POST /api/news/admin/enrichment`. Nie włącza harmonogramu.
+6. Sprawdź wyniki w `/news/`: po sukcesie zobaczysz polskie tytuły,
+   etykietę tłumaczenia AI i rozwijany tytuł oryginalny.
+   Jeśli odpowiedź zawiera `LLM_NOT_CONFIGURED`, nie przetworzono artykułów.
+
+Dopiero po potwierdzeniu jakości tłumaczeń można rozważyć
+`NEWS_ENRICHMENT_ENABLED=true`, co uruchomi automatyczne przetwarzanie
+kolejnych artykułów. Wymaga to oceny wydajności, kosztu generowania
+i akceptacji; **nie aktywujemy tego automatycznie**.
+
 ## Diagnostyka
 
 ```powershell
