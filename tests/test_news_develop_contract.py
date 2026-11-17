@@ -33,6 +33,15 @@ class NewsDevContractTest(unittest.TestCase):
             self.services["postgres"]["environment"]["NEWS_DB_PASSWORD"]
         )
 
+    def test_alice_web_uses_internal_news_gateway(self):
+        web = self.services["alice-web"]
+        self.assertEqual(
+            "${ALICE_WEB_NEWS_UPSTREAM:-http://news-service:8080}",
+            web["environment"]["NEWS_UPSTREAM"]
+        )
+        self.assertIn("ALICE_WEB_NEWS_UPSTREAM=http://news-service:8080", self.env_example)
+        self.assertEqual("127.0.0.1:${ALICE_WEB_PUBLIC_PORT:-19080}:80", web["ports"][0])
+
     def test_background_tasks_require_explicit_opt_in(self):
         self.assertEqual("${NEWS_RSS_ENABLED:-false}",
                          self.news["environment"]["NEWS_RSS_ENABLED"])
