@@ -132,6 +132,9 @@ def run(base_url=DEFAULT_URL, *, source_id=None, list_only=False,
     if not isinstance(after, list):
         raise SmokeError("Import odpowiedział, ale odczyt listy artykułów nie działa.")
     print(f"API artykułów działa; zwróciło {len(after)} rekordów (limit 100).")
+    if inserted > 0 and not after:
+        print("UWAGA: API nie pokazuje artykułów pomimo dodatniego licznika zapisu; weryfikacja wymagana.")
+        return 2
     if seen == 0:
         print("UWAGA: źródło nie zwróciło żadnych artykułów; import wymaga weryfikacji.")
         return 2
