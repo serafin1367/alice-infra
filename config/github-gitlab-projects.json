@@ -75,6 +75,10 @@
     {
       "github": "alice-microservices-work",
       "gitlab": "alice/microservices/work"
+    },
+    {
+      "github": "alice-news-service",
+      "gitlab": "alice/microservices/news"
     }
   ]
 }
