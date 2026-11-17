@@ -24,6 +24,7 @@ $composeBaseArguments = @(
 $buildServices = @(
     "alice-web",
     "weather-service",
+    "news-service",
     "time-coordinator-service",
     "mail-service",
     "llm-service",
@@ -53,8 +54,19 @@ try {
 if ($buildExitCode -ne 0) {
     throw "Budowanie obrazow zakonczone kodem $buildExitCode."
 }
-# Build completed successfully; images can now be recreated.
-#
+# The PostgreSQL volume may predate Alice News. Init scripts run automatically only
+# for an empty data directory, so provision the News role/database explicitly.
+# This is idempotent and does not drop or reset existing databases.
+Write-Host "Sprawdzam baze Alice News w istniejącym PostgreSQL DEV..." -ForegroundColor Cyan
+& docker @composeBaseArguments up --detach --wait postgres
+if ($LASTEXITCODE -ne 0) {
+    throw "Postgres DEV nie jest gotowy (kod $LASTEXITCODE)."
+}
+& docker @composeBaseArguments exec -T postgres bash /docker-entrypoint-initdb.d/09-init-news-database.sh
+if ($LASTEXITCODE -ne 0) {
+    throw "Nie udalo sie zainicjalizowac bazy News (kod $LASTEXITCODE)."
+}
+
 
 $composeArguments = $composeBaseArguments + @(
     "up",
