@@ -118,7 +118,7 @@ def main():
         # Collect all configured projects, including ones whose sync failed, so CI errors remain visible.
         collector = BASE / "scripts" / "publish-ci-reports.py"
         env = dict(os.environ, GITLAB_URL=cfg["gitlab_base_url"],
-                   GITLAB_PROJECTS=",".join(x["gitlab"] for x in projects))
+                   GITLAB_PROJECTS=",".join(x["gitlab"] for x in cfg["projects"]))
         try:
             completed = subprocess.run([sys.executable, str(collector)], env=env, timeout=900, check=False)
             if completed.returncode:
