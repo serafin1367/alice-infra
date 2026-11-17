@@ -23,6 +23,22 @@ if (-not (Test-Path -LiteralPath $workshopPath)) {
     }
 }
 
+# Bootstrap the News checkout too; the generic repository scan cannot discover
+# a repository before its directory exists.
+$newsPath = Join-Path $Root "microservices/news"
+if (-not (Test-Path -LiteralPath $newsPath)) {
+    $parent = Split-Path -Parent $newsPath
+    if (-not (Test-Path -LiteralPath $parent)) {
+        New-Item -ItemType Directory -Path $parent -Force | Out-Null
+    }
+    Write-Host "Pobieranie brakujacego repozytorium alice-news-service..." -ForegroundColor Cyan
+    & git clone https://github.com/serafin1367/alice-news-service.git $newsPath
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "Nie udalo sie sklonowac alice-news-service. Sprawdz dostep do repozytorium."
+        exit 1
+    }
+}
+
 $excluded = @(".git", "node_modules", "target", "build", "dist", ".venv", "venv", ".next", ".idea")
 $pending = New-Object System.Collections.Stack
 $pending.Push(@($Root, 0))
