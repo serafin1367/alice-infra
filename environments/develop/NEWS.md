@@ -141,6 +141,55 @@ docker compose --env-file .env exec -T postgres psql -U postgres -d alice_news -
 Jeśli dostosowałeś `NEWS_DB_NAME` lub `POSTGRES_SUPERUSER` w `.env`,
 użyj odpowiadających im wartości. Zapytania są tylko do odczytu.
 
+## Alice Web — wspólny panel boczny i brama API (DEV)
+
+Alice Web ma już widok `/news/` i pozycję **Aktualności** we wspólnym menu
+bocznym. Frontend używa `GET /api/news/categories`,
+`GET /api/news/articles` oraz `GET /api/news/sources`, które Nginx
+przekazuje do `http://news-service:8080` wewnątrz sieci Docker.
+Połączenie jest konfigurowane zmienną
+`ALICE_WEB_NEWS_UPSTREAM=http://news-service:8080` (w Compose jest też
+taki sam bezpieczny domyślny adres).
+
+Nie publikujemy nowego portu do Alice Web ani administracyjnego API RSS.
+Brama odrzuca metody inne niż GET dla prefiksu `/api/news/`. Token
+`NEWS_ADMIN_TOKEN` pozostaje wyłącznie w mikroserwisie News.
+
+Zaktualizuj kod, następnie w PowerShell uruchom:
+
+```powershell
+cd alice-infra/environments/develop
+.\pull-all.ps1
+.\rebuild-news-web.ps1
+```
+
+Jeśli News został już niedawno przebudowany i jest gotowy, można ograniczyć
+odtwarzanie do samego Alice Web:
+
+```powershell
+.\rebuild-news-web.ps1 -SkipNewsRebuild
+```
+
+Skrypt buduje tylko Alice Web, odtwarza jego kontener oraz sprawdza:
+- `GET /health` — gotowość Nginx;
+- `GET /news/` — istniejący widok i wspólna nawigacja;
+- `GET /api/news/categories`, `articles?limit=1` i `sources` —
+  rzeczywistą trasę od przeglądarki przez Nginx do News;
+- `POST /api/news/categories` — HTTP 403 (zablokowane zapisy).
+
+Prawidłowy wynik oznacza, że moduł jest dostępny pod
+**http://127.0.0.1:19080/news/** (lub lokalnym portem z `.env`).
+Widok prezentuje nazwy kategorii, karty z miniaturkami, opcjonalną ocenę AI,
+priorytet kategorii i odsyłacze do oryginalnych materiałów.
+
+**Ważne:** kategorie mają priorytet 1–3, ale ocena ważności AI 0–100
+zostanie wypełniona dopiero po uruchomieniu przetwarzania LLM. Sortowanie
+w interfejsie obejmuje tylko pobraną pulę maksymalnie 100 artykułów.
+
+Potwierdzony wcześniej kontrolowany import Ars Technica zapisał 20 nowych
+artykułów na DEV. Nie dowodzi to dostępności innych źródeł RSS ani działania
+automatycznego harmonogramu. Ten etap nie dotyka produkcji.
+
 ## Diagnostyka
 
 ```powershell
@@ -154,4 +203,4 @@ Przed ponownym `rebuild-all.ps1` zaktualizuj kod News (skrypt `pull-all.ps1` klo
 
 ## Ograniczenia
 
-Ten etap nie dodaje jeszcze routingu `/api/news` przez Alice Web ani widoku Wiadomości. Port serwisu jest dostępny tylko z lokalnego hosta DEV; interfejs w Alice Web jest kolejnym etapem. Zapis konfiguracji w GitHubie i pozytywny pipeline GitLaba nie są dowodem wdrożenia ani działania usługi na lokalnym Dockerze.
+Routing `/api/news` i widok Aktualności istnieją już w Alice Web; konfiguracja DEV wymaga wdrożenia przez `rebuild-news-web.ps1`. Port serwisu News pozostaje dostępny tylko z hosta DEV, natomiast żądania z przeglądarki obsługuje brama Alice Web. Zapis na GitHubie oraz pozytywny GitLab CI nie zastępują testu na lokalnym Dockerze.
