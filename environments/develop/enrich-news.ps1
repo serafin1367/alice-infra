@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
-    [switch]$ListProfiles
+    [Alias("ListProfiles")]
+    [switch]$ShowTranslator
 )
 
 $ErrorActionPreference = "Stop"
@@ -23,12 +24,26 @@ function Get-LocalComposePort([string]$Service, [int]$ContainerPort) {
     return [int]$Matches[1]
 }
 
-# Inspect existing Alice LLM profiles without changing any data.
+# The LLM service chooses the translator by purpose; profile IDs are not configuration.
 $llmPort = Get-LocalComposePort "llm-service" 8084
-$profiles = @(Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:$llmPort/api/llm/profiles" -TimeoutSec 15)
-Write-Host "Dostepne profile Alice LLM:" -ForegroundColor Cyan
-$profiles | Select-Object id, name, model, providerId | Format-Table -AutoSize
-if ($ListProfiles) {
+try {
+    $profile = Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:$llmPort/api/llm/profiles/purpose/TRANSLATOR" -TimeoutSec 15
+} catch {
+    throw "Nie znaleziono profilu TRANSLATOR w Alice LLM. Zaktualizuj llm-service z migracja V101 i przypisz profilowi przeznaczenie Tlumacz."
+}
+if ($null -eq $profile -or $profile.purpose -ne "TRANSLATOR" -or
+    [string]::IsNullOrWhiteSpace($profile.model)) {
+    throw "Alice LLM nie zwrocil poprawnie skonfigurowanego profilu TRANSLATOR."
+}
+
+Write-Host "Automatycznie wykryty profil tlumacza:" -ForegroundColor Cyan
+[pscustomobject]@{
+    Przeznaczenie = "Tłumacz"
+    Nazwa = $profile.name
+    Model = $profile.model
+    Dostawca = $profile.providerId
+} | Format-List
+if ($ShowTranslator) {
     Write-Host "Tryb tylko odczyt: nie uruchomiono tlumaczenia." -ForegroundColor Green
     return
 }
@@ -39,24 +54,18 @@ $readiness = Invoke-RestMethod -Method Get -Uri "$newsUrl/actuator/health/readin
 if ($readiness.status -ne "UP") {
     throw "Alice News nie jest gotowy. Nie uruchamiam przetwarzania."
 }
-$rawId = & docker @compose exec -T news-service printenv NEWS_LLM_PROFILE_ID
-if ($LASTEXITCODE -ne 0) { throw "Nie moge odczytac identyfikatora profilu News." }
-$profileId = 0L
-if (-not [long]::TryParse(([string](@($rawId)[-1])).Trim(), [ref]$profileId) -or $profileId -le 0) {
-    throw "NEWS_LLM_PROFILE_ID nie jest skonfigurowany. Wybierz id profilu z listy, ustaw je w prywatnym .env, odtworz tylko news-service i ponow test."
+$batchSizeOutput = & docker @compose exec -T news-service printenv NEWS_ENRICHMENT_BATCH_SIZE
+if ($LASTEXITCODE -ne 0) {
+    throw "Nie mozna odczytac wielkosci partii News."
 }
-$selected = @($profiles | Where-Object { $_.id -eq $profileId })
-if ($selected.Count -ne 1) {
-    throw "Profil LLM id=$profileId nie zostal znaleziony. Nie uruchamiam przetwarzania."
-}
-Write-Host "Profil: $($selected[0].name) (id=$profileId), model: $($selected[0].model)"
-Write-Host "Jedno wywolanie przetworzy najwyzej NEWS_ENRICHMENT_BATCH_SIZE artykulow."
+$batchSize = ([string](@($batchSizeOutput)[-1])).Trim()
+Write-Host "Jedno wywolanie przetworzy maksymalnie $batchSize artykulow."
 if ((Read-Host "Przetworzyc jedna partie tytulow i streszczen? Wpisz TAK") -cne "TAK") {
     Write-Host "Anulowano. Bez zmian." -ForegroundColor Yellow
     return
 }
 
-# The admin token is entered securely and never placed in CLI args or history.
+# The admin token is entered securely and never placed in CLI arguments/history.
 $secureToken = Read-Host "NEWS_ADMIN_TOKEN" -AsSecureString
 $pointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureToken)
 try {
@@ -71,8 +80,8 @@ try {
 }
 Write-Host "Wynik partii: $($result.state); przetworzone=$($result.processed); OK=$($result.succeeded); bledy=$($result.failed)" -ForegroundColor Cyan
 if ($result.state -ne "OK" -or $result.failed -gt 0) {
-    throw "Partia nie zakonczyla sie poprawnie. Sprawdz logi news-service, profil LLM i stan PostgreSQL."
+    throw "Partia nie zakonczyla sie poprawnie. Sprawdz logi news-service, profil LLM i PostgreSQL."
 }
 $articles = @(Invoke-RestMethod -Method Get -Uri "$newsUrl/api/news/articles?limit=5" -TimeoutSec 15)
 $articles | Select-Object -First 5 title, originalTitle, translationStatus | Format-Table -Wrap
-Write-Host "Tytuly po polsku sa dostepne w Alice Web, jesli dla artykulow ustawiono translationStatus=DONE." -ForegroundColor Green
+Write-Host "W Alice Web polskie tytuly pojawiaja sie przy translationStatus=DONE." -ForegroundColor Green
