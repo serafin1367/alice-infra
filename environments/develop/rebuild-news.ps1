@@ -54,6 +54,8 @@ if (-not $SkipHttpSmokeTest) {
         Write-Host "Sprawdzam $url" -ForegroundColor Cyan
         & curl.exe --fail --silent --show-error --max-time 10 $url
         if ($LASTEXITCODE -ne 0) {
+            Write-Warning "News DEV: blad HTTP w $url. Ostatnie logi kontenera:"
+            & docker @base logs --tail 120 --no-color news-service
             throw "News DEV: test HTTP nie powiodl sie ($url)."
         }
         Write-Host ""
