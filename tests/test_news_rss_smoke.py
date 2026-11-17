@@ -21,7 +21,7 @@ class FakeAPI:
     def __init__(self, *, readiness="UP", article_response=None, result=None):
         self.calls = []
         self.readiness = readiness
-        self.article_response = [] if article_response is None else article_response
+        self.article_response = article_response
         self.result = result if result is not None else {
             "sourceId": FEED_ID, "source": "BBC Technology", "seen": 3,
             "inserted": 2, "error": None}
@@ -31,7 +31,11 @@ class FakeAPI:
         if path == "/actuator/health/readiness":
             return {"status": self.readiness}
         if path.startswith("/api/news/articles"):
-            return self.article_response
+            if self.article_response is not None:
+                return self.article_response
+            if path.endswith("limit=100") and self.result.get("inserted", 0) > 0:
+                return [{"id": "test-persisted-article"}]
+            return []
         if path == "/api/news/sources":
             return SOURCES
         if path == "/api/news/admin/import/" + FEED_ID:
@@ -113,6 +117,12 @@ class NewsRssSmokeTest(unittest.TestCase):
     def test_no_items_returns_incomplete_code(self):
         api = FakeAPI(result={"sourceId": FEED_ID, "source": "BBC", "seen": 0,
                               "inserted": 0, "error": None})
+        self.assertEqual(2, call(api))
+
+    def test_inserted_count_without_visible_articles_requires_investigation(self):
+        api = FakeAPI(article_response=[], result={
+            "sourceId": FEED_ID, "source": "BBC", "seen": 3,
+            "inserted": 2, "error": None})
         self.assertEqual(2, call(api))
 
     def test_dedup_is_not_reported_as_failure(self):
