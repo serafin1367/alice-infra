@@ -78,6 +78,26 @@ class NewsDevContractTest(unittest.TestCase):
         self.assertNotIn("down -v", script)
         self.assertNotIn('/api/news/admin/import', script)
 
+    def test_news_web_verify_only_does_not_rebuild_or_restart(self):
+        script = (DEV / "rebuild-news-web.ps1").read_text(encoding="utf-8")
+        self.assertIn("[switch]$VerifyOnly", script)
+        self.assertIn("if (-not $VerifyOnly -and -not (Test-Path -LiteralPath $webDockerfile))", script)
+        # Read-only branch must not issue Compose build/up or News rebuild.
+        verify_branch = script.split("if ($VerifyOnly) {", 1)[1].split("} else {", 1)[0]
+        self.assertNotIn("Invoke-Compose", verify_branch)
+        self.assertNotIn("rebuild-news.ps1", verify_branch)
+        # Mutating operations stay solely in the alternate branch.
+        rebuild_branch = script.split("} else {", 1)[1].split(
+            '    $portResult = & docker @base port alice-web 80', 1)[0]
+        self.assertIn('Invoke-Compose -ArgsList @("build", "alice-web")', rebuild_branch)
+        self.assertIn('Invoke-Compose -ArgsList @("up", "-d", "--no-deps"', rebuild_branch)
+        self.assertIn('if (-not $SkipNewsRebuild)', rebuild_branch)
+        # Both paths share the same read-only HTTP validation and diagnostics.
+        self.assertIn('Assert-Get "$webUrl/health"', script)
+        self.assertIn('Assert-Get "$webUrl/api/news/articles?limit=1"', script)
+        self.assertIn('([string]$postStatus).Trim() -ne "403"', script)
+        self.assertNotIn("down -v", script)
+
     def test_production_compose_not_modified_for_news(self):
         production = (ROOT / "environments" / "production" / "docker-compose.yml").read_text(
             encoding="utf-8"
