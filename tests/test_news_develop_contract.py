@@ -40,7 +40,11 @@ class NewsDevContractTest(unittest.TestCase):
             web["environment"]["NEWS_UPSTREAM"]
         )
         self.assertIn("ALICE_WEB_NEWS_UPSTREAM=http://news-service:8080", self.env_example)
-        self.assertEqual("127.0.0.1:${ALICE_WEB_PUBLIC_PORT:-19080}:80", web["ports"][0])
+        self.assertEqual(
+            "${ALICE_WEB_BIND_IP:-127.0.0.1}:${ALICE_WEB_PUBLIC_PORT:-19080}:80",
+            web["ports"][0]
+        )
+        self.assertIn("ALICE_WEB_BIND_IP=127.0.0.1", self.env_example)
 
     def test_background_tasks_require_explicit_opt_in(self):
         self.assertEqual("${NEWS_RSS_ENABLED:-false}",
