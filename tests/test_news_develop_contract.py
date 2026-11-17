@@ -62,6 +62,18 @@ class NewsDevContractTest(unittest.TestCase):
         self.assertIn('"news-service"', (DEV / "rebuild-all.ps1").read_text(encoding="utf-8"))
         self.assertTrue((DEV / "rebuild-news.ps1").is_file())
 
+    def test_news_web_smoke_targets_existing_alice_web_only(self):
+        script = (DEV / "rebuild-news-web.ps1").read_text(encoding="utf-8")
+        self.assertIn('Invoke-Compose -ArgsList @("build", "alice-web")', script)
+        self.assertIn('"--no-deps", "--force-recreate", "--wait", "alice-web"', script)
+        self.assertIn('"/news/"', script)
+        self.assertIn('"/api/news/categories"', script)
+        self.assertIn('"/api/news/articles?limit=1"', script)
+        self.assertIn('"/api/news/sources"', script)
+        self.assertIn('HTTP $postStatus', script)
+        self.assertNotIn("down -v", script)
+        self.assertNotIn('/api/news/admin/import', script)
+
     def test_production_compose_not_modified_for_news(self):
         production = (ROOT / "environments" / "production" / "docker-compose.yml").read_text(
             encoding="utf-8"
