@@ -32,7 +32,6 @@ NEWS_ADMIN_TOKEN=ustaw-dlugi-losowy-token-tylko-w-prywatnym-env
 NEWS_RSS_ENABLED=false
 NEWS_ENRICHMENT_ENABLED=false
 NEWS_LLM_BASE_URL=http://llm-service:8084
-NEWS_LLM_PROFILE_ID=0
 ```
 
 Nie używaj przykładowych haseł w środowisku produkcyjnym. Zmiana hasła w `.env` **nie zmienia automatycznie hasła istniejącej roli PostgreSQL** — wymaga osobnej kontrolowanej rotacji.
@@ -206,48 +205,65 @@ Potwierdzony wcześniej kontrolowany import Ars Technica zapisał 20 nowych
 artykułów na DEV. Nie dowodzi to dostępności innych źródeł RSS ani działania
 automatycznego harmonogramu. Ten etap nie dotyka produkcji.
 
-## Tłumaczenie tytułów na polski przez Alice LLM
+## Tłumaczenie tytułów — wspólny profil Alice LLM „Tłumacz”
 
-Alice News zapisuje oryginalny tytuł w `news_article.title`, a tłumaczenie
-w `news_article.title_pl`. API artykułów pokazuje polski tytuł, gdy jest dostępny,
-ale zachowuje również `originalTitle` i `translationStatus`.
-Alice Web oznacza tytuły przetłumaczone przez AI i pozwala podejrzeć oryginał.
+Alice LLM udostępnia jedno ogólne przeznaczenie `TRANSLATOR` dla News i Anime.
+Migracja Flyway `V101` w `alice-microservices-llm` zmienia istniejące
+przypisania `MEDIA_TRANSLATOR` na `TRANSLATOR`. Nie kasuje profilu, modelu,
+promptów ani jego ID. Dawne wywołania `MEDIA_TRANSLATOR` mają przejściowy
+alias w LLM. Alice Media i Alice News docelowo korzystają z `TRANSLATOR`.
 
-Przetwarzanie odbywa się przez istniejący profil Alice LLM. Nie korzystamy
-z osobnej usługi tłumaczącej i nie wysyłamy tytułów do losowego dostawcy.
+**Nie ustawiaj `NEWS_LLM_PROFILE_ID`** — zmienna nie jest już wykorzystywana.
+Alice News automatycznie odczytuje istniejący profil przez
+`GET /api/llm/profiles/purpose/TRANSLATOR` i generuje przez
+`POST /api/llm/profiles/purpose/TRANSLATOR/generate`.
+Jeżeli profil nie istnieje, wzbogacanie zwraca `LLM_NOT_CONFIGURED`
+zamiast korzystać z przypadkowego modelu.
 
-**Bezpieczny test jednej partii bez włączania harmonogramu:**
+Wymagana kolejność wdrożenia na DEV (bez zmian bazy News i automatycznego RSS):
 
-1. Pobierz najnowszy kod `alice-news-service` i `alice-infra`.
-2. W katalogu `environments/develop` wykonaj:
+1. Pobierz aktualne repozytoria przez `./pull-all.ps1`.
+2. **Najpierw zaktualizuj i uruchom `llm-service`**, aby wykonała się migracja
+   `V101` i dostępne były endpointy według przeznaczenia:
    ```powershell
-   .\enrich-news.ps1 -ListProfiles
+   docker compose --env-file .env up -d --build --no-deps --force-recreate --wait llm-service
    ```
-   Wyświetli to identyfikatory, nazwy i modele istniejących profili LLM
-   bez uruchamiania generowania.
-3. W prywatnym `.env` ustaw `NEWS_LLM_PROFILE_ID` na **rzeczywiste ID**
-   działającego profilu z listy. Dodaj `NEWS_ENRICHMENT_BATCH_SIZE=2`.
-   Pozostaw `NEWS_ENRICHMENT_ENABLED=false` i `NEWS_RSS_ENABLED=false`.
-4. Przebuduj i odtwórz **wyłącznie** News, aby wykorzystać ręczne API:
+3. Wyświetl aktualnie przypisany profil tłumacza:
+   ```powershell
+   .\enrich-news.ps1 -ShowTranslator
+   ```
+   Polecenie jest tylko do odczytu. Pokazuje nazwę, model i dostawcę —
+   **bez proszenia o numer profilu**. Starszy przełącznik `-ListProfiles`
+   nadal działa jako alias i pokazuje ten sam profil. Jeśli profil nie
+   istnieje, przypisz mu przeznaczenie „Tłumacz” w konfiguracji Alice LLM.
+4. Zostaw w `.env`:
+   ```dotenv
+   NEWS_ENRICHMENT_ENABLED=false
+   NEWS_ENRICHMENT_BATCH_SIZE=2
+   NEWS_LLM_BASE_URL=http://llm-service:8084
+   ```
+   Dla ręcznego testu nie trzeba włączać harmonogramu ani podawać ID.
+5. Zbuduj i odtwórz **tylko News**:
    ```powershell
    docker compose --env-file .env up -d --build --no-deps --force-recreate --wait news-service
    ```
-5. Uruchom:
+6. Świadomie uruchom pojedynczą partię:
    ```powershell
    .\enrich-news.ps1
    ```
-   Skrypt sprawdza gotowość News oraz istnienie wskazanego profilu,
-   wymaga wpisania `TAK` i pobiera `NEWS_ADMIN_TOKEN` niewidocznie
-   z terminala. Wykonuje **jedno** autoryzowane żądanie
-   `POST /api/news/admin/enrichment`. Nie włącza harmonogramu.
-6. Sprawdź wyniki w `/news/`: po sukcesie zobaczysz polskie tytuły,
-   etykietę tłumaczenia AI i rozwijany tytuł oryginalny.
-   Jeśli odpowiedź zawiera `LLM_NOT_CONFIGURED`, nie przetworzono artykułów.
+   Skrypt sprawdza profil i gotowość News, wymaga `TAK`, następnie
+   bezpiecznie pobiera `NEWS_ADMIN_TOKEN`. Nie zmienia harmonogramu.
+7. Sprawdź `/news/`: przetłumaczone nagłówki są oznaczone jako AI,
+   a oryginalny tytuł można rozwinąć. Polskie tytuły trafiają do
+   `news_article.title_pl`; oryginały w `news_article.title` pozostają.
 
-Dopiero po potwierdzeniu jakości tłumaczeń można rozważyć
-`NEWS_ENRICHMENT_ENABLED=true`, co uruchomi automatyczne przetwarzanie
-kolejnych artykułów. Wymaga to oceny wydajności, kosztu generowania
-i akceptacji; **nie aktywujemy tego automatycznie**.
+Przy współdzieleniu dawnego profilu anime z News upewnij się, że jego
+**system prompt jest ogólnym poleceniem tłumaczenia**, a nie instrukcją
+wyłącznie do opisów anime. Migracja celowo nie nadpisuje tego promptu
+ani innych prywatnych ustawień profilu.
+
+Po akceptacji jakości tłumaczeń można osobno zaplanować automatyczne
+przetwarzanie (`NEWS_ENRICHMENT_ENABLED=true`). Nie włączamy go w tym kroku.
 
 ## Diagnostyka
 
