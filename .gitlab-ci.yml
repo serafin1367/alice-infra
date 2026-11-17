@@ -47,3 +47,26 @@ infra-compose:
       if [ "$found" -eq 0 ]; then
         echo "No root-level Compose file; infrastructure Compose validation not applicable."
       fi
+
+# Validate DEV Compose including Alice News without starting containers or touching production.
+infra-compose-develop:
+  stage: validate
+  tags: [alice-quality-docker]
+  script:
+    - 'command -v docker >/dev/null || { echo "Docker CLI unavailable"; exit 1; }'
+    - 'docker compose version >/dev/null || { echo "Docker Compose plugin unavailable"; exit 1; }'
+    - |
+      docker compose \
+        --project-directory "$CI_PROJECT_DIR/environments/develop" \
+        --env-file "$CI_PROJECT_DIR/environments/develop/.env.example" \
+        -f "$CI_PROJECT_DIR/environments/develop/docker-compose.yml" \
+        config --quiet
+
+infra-news-dev-contract:
+  stage: validate
+  tags: [alice-quality-docker]
+  script:
+    - 'command -v docker >/dev/null || { echo "Docker CLI unavailable"; exit 1; }'
+    - |
+      docker run --rm -v "$CI_PROJECT_DIR:/repo:ro" -w /repo python:3.12-alpine \
+        sh -ec 'pip install --quiet --disable-pip-version-check --no-cache-dir PyYAML && python -m unittest discover -s tests -p "test_*.py"'
