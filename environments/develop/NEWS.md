@@ -170,6 +170,22 @@ odtwarzanie do samego Alice Web:
 .\rebuild-news-web.ps1 -SkipNewsRebuild
 ```
 
+Jeśli oba kontenery już działają i chcesz **tylko potwierdzić integrację**
+bez przebudowy, restartu, importu ani zmian w bazie danych, uruchom:
+
+```powershell
+.\rebuild-news-web.ps1 -VerifyOnly
+```
+
+Tryb `-VerifyOnly` korzysta z aktualnej konfiguracji Compose i prywatnego
+`.env`, odczytuje opublikowany port istniejącego kontenera Alice Web,
+sprawdza podane poniżej endpointy oraz odmowę niezapisującego żądania
+`POST /api/news/categories`. W przypadku błędu wyświetla ostatnie logi,
+ale **nie uruchamia** `rebuild-news.ps1`, `docker compose build` ani
+`docker compose up`. Wymaga działających kontenerów i Dockera; nie jest
+testem w pamięci podręcznej ani potwierdzeniem samej konfiguracji.
+
+
 Skrypt buduje tylko Alice Web, odtwarza jego kontener oraz sprawdza:
 - `GET /health` — gotowość Nginx;
 - `GET /news/` — istniejący widok i wspólna nawigacja;
