@@ -1,0 +1,64 @@
+"""Static DEV integration checks for Alice News (no Docker/DB required)."""
+import unittest
+from pathlib import Path
+import yaml
+
+ROOT = Path(__file__).resolve().parents[1]
+DEV = ROOT / "environments" / "develop"
+
+
+class NewsDevContractTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.compose = yaml.safe_load((DEV / "docker-compose.yml").read_text(encoding="utf-8"))
+        cls.services = cls.compose["services"]
+        cls.env_example = (DEV / ".env.example").read_text(encoding="utf-8")
+        cls.news = cls.services["news-service"]
+
+    def test_news_uses_sibling_checkout_and_nonpublic_port(self):
+        self.assertEqual("../../../microservices/news", self.news["build"]["context"])
+        self.assertEqual(['127.0.0.1:${NEWS_PUBLIC_PORT:-19090}:8080'], self.news["ports"])
+        self.assertEqual("news-service", self.news["hostname"])
+
+    def test_news_uses_shared_postgres_and_rabbitmq(self):
+        self.assertEqual("service_healthy", self.news["depends_on"]["postgres"]["condition"])
+        self.assertEqual("service_healthy", self.news["depends_on"]["rabbitmq"]["condition"])
+        self.assertIn("jdbc:postgresql://postgres:5432/", self.news["environment"]["DB_URL"])
+        self.assertEqual("rabbitmq", self.news["environment"]["RABBITMQ_HOST"])
+        self.assertIn("NEWS_DB_NAME", self.services["postgres"]["environment"])
+        self.assertIn("NEWS_DB_USERNAME", self.services["postgres"]["environment"])
+        self.assertIn("NEWS_DB_PASSWORD", self.services["postgres"]["environment"])
+        self.assertEqual(
+            self.news["environment"]["DB_PASSWORD"],
+            self.services["postgres"]["environment"]["NEWS_DB_PASSWORD"]
+        )
+
+    def test_background_tasks_require_explicit_opt_in(self):
+        self.assertEqual("${NEWS_RSS_ENABLED:-false}",
+                         self.news["environment"]["NEWS_RSS_ENABLED"])
+        self.assertEqual("${NEWS_ENRICHMENT_ENABLED:-false}",
+                         self.news["environment"]["NEWS_ENRICHMENT_ENABLED"])
+        self.assertEqual("${NEWS_ADMIN_TOKEN:-}",
+                         self.news["environment"]["NEWS_ADMIN_TOKEN"])
+
+    def test_database_bootstrap_and_dev_tools_are_registered(self):
+        script = (DEV / "postgres" / "init" / "09-init-news-database.sh").read_text(encoding="utf-8")
+        self.assertIn("CREATE ROLE", script)
+        self.assertIn("CREATE DATABASE", script)
+        self.assertIn("WHERE NOT EXISTS", script)
+        self.assertIn("\\gexec", script)
+        self.assertIn("NEWS_DB_PASSWORD=", self.env_example)
+        self.assertIn("NEWS_PUBLIC_PORT=19090", self.env_example)
+        self.assertIn("alice-news-service.git", (DEV / "pull-all.ps1").read_text(encoding="utf-8"))
+        self.assertIn('"news-service"', (DEV / "rebuild-all.ps1").read_text(encoding="utf-8"))
+        self.assertTrue((DEV / "rebuild-news.ps1").is_file())
+
+    def test_production_compose_not_modified_for_news(self):
+        production = (ROOT / "environments" / "production" / "docker-compose.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertNotIn("news-service:", production)
+
+
+if __name__ == "__main__":
+    unittest.main()
