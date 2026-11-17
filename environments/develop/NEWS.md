@@ -125,8 +125,8 @@ potwierdzenie i token. Skrypt **nie obsługuje importu wszystkich źródeł na r
   bez zmian.
 
 Interpretacja kodu zakończenia skryptu: `0` — brak błędów raportowanych przez
-API (również przy deduplikacji), `1` — błąd, `2` — `seen=0`, import
-niepotwierdzony. Zbieranie i pełna weryfikacja na lokalnym Dockerze wymagają
+API (również przy deduplikacji), `1` — błąd, `2` — `seen=0` lub brak
+widocznych artykułów mimo `inserted>0` — import niepotwierdzony. Zbieranie i pełna weryfikacja na lokalnym Dockerze wymagają
 uruchomienia polecenia na hoście DEV; zielone CI samo nie potwierdza importu.
 
 ### Potwierdzenie w bazie (opcjonalnie)
