@@ -108,3 +108,21 @@ Z katalogu `environments/develop` (PowerShell):
 ```
 
 `rebuild-media.ps1` uzywa `--no-deps`, wiec PostgreSQL i RabbitMQ musza juz dzialac, a baza `media` musi istniec. Skrypt nie usuwa wolumenow ani baz danych. Logi sa wyswietlane po odtworzeniu kontenerow; `Ctrl+C` konczy sledzenie logow.
+
+## Alice News – DEV
+
+Nowy mikroserwis `news-service` działa we wspólnym Docker Compose, z oddzielną bazą
+`alice_news` w istniejącym PostgreSQL. Port API: **127.0.0.1:19090**.
+Dostęp do `/actuator/health/readiness` jest sprawdzany przez healthcheck obrazu.
+
+Pobierz kod poleceniem `./pull-all.ps1` — brakujący moduł jest klonowany
+do `microservices/news`. Do samodzielnego wdrożenia w DEV użyj
+`./rebuild-news.ps1`; skrypt tworzy bazę bez usuwania danych i nie
+restartuje innych mikroserwisów poza zależnościami potrzebnymi na starcie.
+
+**Ważne:** jeśli masz już prywatny plik `.env`, dopisz do niego zmienne
+`NEWS_*` z aktualnego `.env.example` zamiast nadpisywać cały plik.
+Automatyczne RSS i LLM pozostają domyślnie wyłączone.
+
+Kompletne instrukcje (inicjalizacja istniejącego wolumenu, test API,
+włączanie RSS, diagnostyka): [NEWS.md](NEWS.md).
