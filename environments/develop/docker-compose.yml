@@ -85,6 +85,9 @@ services:
       IOT_WORKSHOP_DB_NAME: ${IOT_WORKSHOP_DB_NAME:-iot_workshop}
       IOT_WORKSHOP_DB_USERNAME: ${IOT_WORKSHOP_DB_USERNAME:-iot_workshop}
       IOT_WORKSHOP_DB_PASSWORD: ${IOT_WORKSHOP_DB_PASSWORD:-dev-iot-workshop}
+      NEWS_DB_NAME: ${NEWS_DB_NAME:-alice_news}
+      NEWS_DB_USERNAME: ${NEWS_DB_USERNAME:-alice_news}
+      NEWS_DB_PASSWORD: ${NEWS_DB_PASSWORD:-dev-news}
     ports:
       - "${POSTGRES_PORT:-55432}:5432"
     volumes:
@@ -219,6 +222,40 @@ services:
       NOTIFICATIONS_ROUTING_KEY: ${NOTIFICATIONS_ROUTING_KEY:-notifications.created}
     ports:
       - "${WEATHER_PUBLIC_PORT:-19081}:8081"
+
+  news-service:
+    build:
+      context: ../../../microservices/news
+    container_name: ${NEWS_CONTAINER_NAME:-alice-dev-news-service}
+    hostname: news-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "5"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
+      PORT: 8080
+      DB_URL: jdbc:postgresql://postgres:5432/${NEWS_DB_NAME:-alice_news}
+      DB_USERNAME: ${NEWS_DB_USERNAME:-alice_news}
+      DB_PASSWORD: ${NEWS_DB_PASSWORD:-dev-news}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      RABBITMQ_VHOST: ${RABBITMQ_VHOST:-alice}
+      NEWS_ADMIN_TOKEN: ${NEWS_ADMIN_TOKEN:-}
+      NEWS_RSS_ENABLED: ${NEWS_RSS_ENABLED:-false}
+      NEWS_RSS_INTERVAL_MS: ${NEWS_RSS_INTERVAL_MS:-1800000}
+      NEWS_RSS_INITIAL_DELAY_MS: ${NEWS_RSS_INITIAL_DELAY_MS:-60000}
+      NEWS_ENRICHMENT_ENABLED: ${NEWS_ENRICHMENT_ENABLED:-false}
+      NEWS_LLM_BASE_URL: ${NEWS_LLM_BASE_URL:-http://llm-service:8084}
+      NEWS_LLM_PROFILE_ID: ${NEWS_LLM_PROFILE_ID:-0}
+      NEWS_LLM_INTERNAL_TOKEN: ${NEWS_LLM_INTERNAL_TOKEN:-}
+    ports:
+      - "127.0.0.1:${NEWS_PUBLIC_PORT:-19090}:8080"
 
   time-coordinator-service:
     build:
