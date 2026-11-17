@@ -48,7 +48,8 @@ def request_json(base_url, path, *, method="GET", token=None):
     request = urllib.request.Request(base_url + path,
                                      data=b"" if method == "POST" else None,
                                      headers=headers, method=method)
-    opener = urllib.request.build_opener(NoRedirect())
+    # Never relay an admin token through an HTTP proxy or redirect.
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
     try:
         with opener.open(request, timeout=40 if method == "POST" else 10) as response:
             body = response.read(MAX_JSON_BYTES + 1)
