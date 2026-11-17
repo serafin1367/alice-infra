@@ -67,28 +67,79 @@ curl.exe --fail http://127.0.0.1:19090/api/news/articles
 
 Nie używaj `--no-deps` podczas pierwszego uruchomienia zależności. Powyższy wariant ręczny najpierw uruchamia bazę i RabbitMQ.
 
-## Pierwszy import RSS — osobny, świadomy test
+## Kontrolowany pierwszy import RSS (kolejny etap DEV)
 
-Wykonaj dopiero po sprawdzeniu bazy, gotowości i ustawieniu prywatnego `NEWS_ADMIN_TOKEN` (wartość nie może być pusta). Import ręczny działa nawet przy wyłączonym harmonogramie RSS:
+Import uruchamiamy **po** poprawnym wdrożeniu News i przejściu
+`/api/news/articles`. Ten etap nie włącza harmonogramu RSS ani LLM.
+
+Skrypt `news_rss_smoke.py` działa w Pythonie 3 (standard library, bez instalacji
+pakietów). Wymaga lokalnego API `127.0.0.1:19090` i tokenu administratora
+w prywatnym `.env` uruchomionego kontenera.
+
+W PowerShell, w `alice-infra/environments/develop`:
 
 ```powershell
-# Token wpisywany bez zapisywania go w historii polecen.
-$secureToken = Read-Host "NEWS_ADMIN_TOKEN" -AsSecureString
-$ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureToken)
-try {
-    $plainToken = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr)
-    Invoke-RestMethod -Method Post `
-        -Uri "http://127.0.0.1:19090/api/news/admin/import" `
-        -Headers @{ "X-News-Admin-Token" = $plainToken }
-} finally {
-    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr)
-    Remove-Variable plainToken -ErrorAction SilentlyContinue
-}
+./pull-all.ps1
+./rebuild-news.ps1
+py -3 ./news_rss_smoke.py --list
+py -3 ./news_rss_smoke.py
 ```
 
-Pole `error` w wyniku powinno być puste dla poprawnie odczytanych źródeł, a `inserted` może wynosić `0`, jeżeli wiadomości już znajdują się w bazie. Nie traktuj samego HTTP 200 jako dowodu, że wszystkie zewnętrzne źródła RSS działały.
+Przy braku launchera `py`, użyj `python` zamiast `py -3`.
 
-Po udanym teście możesz ustawić `NEWS_RSS_ENABLED=true` w `.env` i odtworzyć tylko kontener News. Przetwarzanie przez LLM aktywuj dopiero po skonfigurowaniu istniejącego profilu i sprawdzeniu klienta LLM; samo `NEWS_LLM_PROFILE_ID=0` nie gwarantuje istnienia profilu.
+1. `--list` **tylko odczytuje** readiness, listę artykułów i aktywne źródła.
+   Nie potrzebuje tokenu ani nie zmienia danych.
+2. Druga komenda wyświetla aktywne źródła, prosi o wybranie **jednego**
+   przez numer i jawne wpisanie `TAK`.
+3. Token `NEWS_ADMIN_TOKEN` jest pobierany niewidocznie z terminala
+   (`getpass`), **nie** podawaj go jako parametr CLI ani nie zapisuj
+   polecenia z tokenem w historii PowerShell.
+4. Skrypt wykonuje **jeden** `POST /api/news/admin/import/{sourceId}`,
+   sprawdza `seen`, `inserted`, `error` i ponowny odczyt artykułów.
+   Nie przełącza `NEWS_RSS_ENABLED` ani `NEWS_ENRICHMENT_ENABLED`.
+5. Odmowa potwierdzenia, błąd readiness / odczytu artykułów lub nieprawidłowy
+   token **przerywa** import. W razie problemu sprawdź
+   `docker compose --env-file .env logs --tail 120 news-service`.
+
+Można również wskazać pojedyncze źródło jawnie:
+
+```powershell
+py -3 ./news_rss_smoke.py --source-id 00000000-0000-0000-0000-000000000000
+```
+
+Zamień przykładowy UUID na identyfikator z `--list`. Nadal wymagane jest
+potwierdzenie i token. Skrypt **nie obsługuje importu wszystkich źródeł na raz**.
+
+### Kryteria akceptacji
+
+- `/actuator/health/readiness` zwraca `UP`, a `/api/news/articles`
+  poprawną listę (również pustą przed importem).
+- Wybrane źródło jest aktywne i import kończy się z `error = null`.
+- `seen > 0`; `inserted > 0` potwierdza nowe artykuły.
+  Jeśli `inserted = 0`, wpisy mogły już istnieć — to nie jest
+  dowód nowego importu; sprawdź stan bazy i historię importów.
+- Odczyt artykułów po imporcie zwraca poprawną listę.
+- `news_import_run` odnotowuje wynik; częściowe błędy zapisu artykułów
+  są zgłaszane jako `FAILED` zamiast pozornego sukcesu.
+- `NEWS_RSS_ENABLED=false` i `NEWS_ENRICHMENT_ENABLED=false` pozostają
+  bez zmian.
+
+Interpretacja kodu zakończenia skryptu: `0` — brak błędów raportowanych przez
+API (również przy deduplikacji), `1` — błąd, `2` — `seen=0`, import
+niepotwierdzony. Zbieranie i pełna weryfikacja na lokalnym Dockerze wymagają
+uruchomienia polecenia na hoście DEV; zielone CI samo nie potwierdza importu.
+
+### Potwierdzenie w bazie (opcjonalnie)
+
+Na istniejącym wolumenie PostgreSQL:
+
+```powershell
+docker compose --env-file .env exec -T postgres psql -U postgres -d alice_news -c "SELECT status,items_seen,items_inserted,finished_at FROM news_import_run ORDER BY id DESC LIMIT 5;"
+docker compose --env-file .env exec -T postgres psql -U postgres -d alice_news -c "SELECT COUNT(*) AS total_articles FROM news_article;"
+```
+
+Jeśli dostosowałeś `NEWS_DB_NAME` lub `POSTGRES_SUPERUSER` w `.env`,
+użyj odpowiadających im wartości. Zapytania są tylko do odczytu.
 
 ## Diagnostyka
 
