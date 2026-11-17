@@ -49,11 +49,14 @@ if (-not $SkipHttpSmokeTest) {
         throw "Nie mozna ustalic portu API News."
     }
     $address = ([string](@($address)[-1])).Trim()
-    $url = "http://$address/actuator/health/readiness"
-    Write-Host "Sprawdzam $url" -ForegroundColor Cyan
-    & curl.exe --fail --silent --show-error --max-time 10 $url
-    if ($LASTEXITCODE -ne 0) {
-        throw "Actuator readiness nie odpowiada poprawnie ($url)."
+    foreach ($path in @("/actuator/health/readiness", "/api/news/categories", "/api/news/articles")) {
+        $url = "http://$address$path"
+        Write-Host "Sprawdzam $url" -ForegroundColor Cyan
+        & curl.exe --fail --silent --show-error --max-time 10 $url
+        if ($LASTEXITCODE -ne 0) {
+            throw "News DEV: test HTTP nie powiodl sie ($url)."
+        }
+        Write-Host ""
     }
 }
 
