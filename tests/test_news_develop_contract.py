@@ -118,6 +118,23 @@ class NewsDevContractTest(unittest.TestCase):
         self.assertNotIn("compose up", script)
         self.assertNotIn("rebuild-news", script)
 
+    def test_reader_refresh_archive_and_retention_are_safe_on_dev(self):
+        env = self.news["environment"]
+        self.assertEqual("${NEWS_RSS_ENABLED:-false}", env["NEWS_RSS_ENABLED"])
+        self.assertEqual("${NEWS_ACTIVE_DAYS:-7}", env["NEWS_ACTIVE_DAYS"])
+        self.assertEqual("${NEWS_RETENTION_DAYS:-90}", env["NEWS_RETENTION_DAYS"])
+        self.assertEqual(
+            "${NEWS_RETENTION_CLEANUP_ENABLED:-false}",
+            env["NEWS_RETENTION_CLEANUP_ENABLED"]
+        )
+        for line in (
+            "NEWS_ACTIVE_DAYS=7",
+            "NEWS_RETENTION_DAYS=90",
+            "NEWS_RETENTION_CLEANUP_ENABLED=false",
+        ):
+            self.assertIn(line, self.env_example)
+        self.assertIn("NEWS_RSS_ENABLED=false", self.env_example)
+
     def test_production_compose_not_modified_for_news(self):
         production = (ROOT / "environments" / "production" / "docker-compose.yml").read_text(
             encoding="utf-8"
