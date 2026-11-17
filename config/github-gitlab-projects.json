@@ -69,7 +69,7 @@
       "gitlab": "alice/microservices/time_coordinator"
     },
     {
-      "github": "alice-weather",
+      "github": "alice-microservices-weather",
       "gitlab": "alice/microservices/weather"
     },
     {
