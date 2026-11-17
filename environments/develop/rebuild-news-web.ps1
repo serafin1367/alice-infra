@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
-    [switch]$SkipNewsRebuild
+    [switch]$SkipNewsRebuild,
+    [switch]$VerifyOnly
 )
 
 $ErrorActionPreference = "Stop"
@@ -8,7 +9,7 @@ $envFile = Join-Path $PSScriptRoot ".env"
 $composeFile = Join-Path $PSScriptRoot "docker-compose.yml"
 $webDockerfile = Join-Path $PSScriptRoot "../../../alice-web/Dockerfile"
 if (-not (Test-Path -LiteralPath $envFile)) { throw "Brak prywatnego pliku .env." }
-if (-not (Test-Path -LiteralPath $webDockerfile)) {
+if (-not $VerifyOnly -and -not (Test-Path -LiteralPath $webDockerfile)) {
     throw "Brak kodu Alice Web. Uruchom .\pull-all.ps1."
 }
 $base = @("compose", "--project-directory", $PSScriptRoot,
@@ -34,14 +35,18 @@ function Assert-Get([string]$Url, [string]$Expected) {
 }
 
 try {
-    if (-not $SkipNewsRebuild) {
-        & (Join-Path $PSScriptRoot "rebuild-news.ps1")
-    }
+    if ($VerifyOnly) {
+        Write-Host "Tryb VerifyOnly: sprawdzam dzialajace kontenery, bez przebudowy i restartu." -ForegroundColor Cyan
+    } else {
+        if (-not $SkipNewsRebuild) {
+            & (Join-Path $PSScriptRoot "rebuild-news.ps1")
+        }
 
-    Write-Host "Buduje tylko obraz Alice Web..." -ForegroundColor Cyan
-    Invoke-Compose -ArgsList @("build", "alice-web")
-    Write-Host "Odtwarzam tylko kontener Alice Web (z nowym NEWS_UPSTREAM)..." -ForegroundColor Cyan
-    Invoke-Compose -ArgsList @("up", "-d", "--no-deps", "--force-recreate", "--wait", "alice-web")
+        Write-Host "Buduje tylko obraz Alice Web..." -ForegroundColor Cyan
+        Invoke-Compose -ArgsList @("build", "alice-web")
+        Write-Host "Odtwarzam tylko kontener Alice Web (z nowym NEWS_UPSTREAM)..." -ForegroundColor Cyan
+        Invoke-Compose -ArgsList @("up", "-d", "--no-deps", "--force-recreate", "--wait", "alice-web")
+    }
 
     $portResult = & docker @base port alice-web 80
     if ($LASTEXITCODE -ne 0 -or -not $portResult) {
