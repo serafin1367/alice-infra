@@ -51,6 +51,9 @@ class NewsDevContractTest(unittest.TestCase):
                          self.news["environment"]["NEWS_RSS_ENABLED"])
         self.assertEqual("${NEWS_ENRICHMENT_ENABLED:-false}",
                          self.news["environment"]["NEWS_ENRICHMENT_ENABLED"])
+        self.assertEqual("${NEWS_ENRICHMENT_BATCH_SIZE:-10}",
+                         self.news["environment"]["NEWS_ENRICHMENT_BATCH_SIZE"])
+        self.assertIn("NEWS_ENRICHMENT_BATCH_SIZE=2", self.env_example)
         self.assertEqual("${NEWS_ADMIN_TOKEN:-}",
                          self.news["environment"]["NEWS_ADMIN_TOKEN"])
 
