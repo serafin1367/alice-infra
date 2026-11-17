@@ -265,6 +265,92 @@ ani innych prywatnych ustawień profilu.
 Po akceptacji jakości tłumaczeń można osobno zaplanować automatyczne
 przetwarzanie (`NEWS_ENRICHMENT_ENABLED=true`). Nie włączamy go w tym kroku.
 
+## Zarządzanie źródłami, stany artykułów i archiwum (DEV)
+
+**Źródła RSS**: w Alice Web wejdź w **Aktualności → Źródła RSS**. Wpisz
+`NEWS_ADMIN_TOKEN` z prywatnego `.env` (token pozostaje wyłącznie w
+polu hasła przeglądarki, bez localStorage/cookies), następnie użyj:
+- **Pobierz subskrypcje** — sprawdzenie URL kanałów, kategorii, czasu i błędów
+  ostatniego pobrania;
+- **Nowa subskrypcja / Edytuj / Włącz / Wyłącz** — zapis do `news_source`;
+- **Pobierz teraz** — pojedynczy import wskazanego kanału, tylko po podaniu tokenu;
+- **Usuń subskrypcję** — miękka archiwizacja i wyłączenie źródła. Już pobrane
+  artykuły **zostają**, a subskrypcję można reaktywować.
+
+Źródła RSS wymagają publicznego HTTPS (port 443). Odrzucane są przekierowania
+i niepubliczne adresy wykryte przez klienta pobierającego. Nowy kanał
+nie uruchamia automatycznego importu, jeśli harmonogram globalnie jest
+wyłączony.
+
+**Automatyczny import**: na DEV `NEWS_RSS_ENABLED=false`, więc harmonogram
+jest wyłączony. Aby go włączyć, po pierwszym udanym ręcznym imporcie ustaw
+w prywatnym `.env`:
+
+```dotenv
+NEWS_RSS_ENABLED=true
+NEWS_RSS_INTERVAL_MS=1800000
+NEWS_RSS_INITIAL_DELAY_MS=60000
+```
+
+Odtwórz tylko News:
+
+```powershell
+docker compose --env-file .env up -d --no-deps --force-recreate --wait news-service
+```
+
+Włączenie harmonogramu oznacza próbę pobrania RSS po około 60 sekundach od
+uruchomienia, a potem około 30 minut **od końca poprzedniego cyklu**.
+Alice Web osobno **odświeża listę z bazy co 60 sekund**, gdy karta
+przeglądarki jest aktywna. Przycisk **Odśwież** nie wywołuje importu RSS;
+do jednorazowego pobrania służy **Pobierz teraz** na panelu źródeł.
+W pasku informacyjnym widać rzeczywisty stan harmonogramu, liczbę
+aktywnych źródeł i datę ostatniego pobrania.
+
+**Stany i personalizacja**:
+- **Bieżące** — artykuły z ostatnich 7 dni, również przeczytane. Przeczytane
+  **nie znikają**, tylko zostają lekko przygaszone. Zmianę można cofnąć.
+- **Nieprzeczytane** — tylko nieprzeczytane artykuły z bieżącego okresu.
+- **Zapisane** — przechowywane niezależnie od wieku.
+- **Nie interesuje mnie** — przenosi artykuł do widoku **Ukryte**,
+  z możliwością przywrócenia.
+- **Archiwum** — wiadomości starsze niż `NEWS_ACTIVE_DAYS=7`;
+  bez usuwania z PostgreSQL.
+- **Wszystkie** — wszystkie nieukryte wiadomości, również przeczytane
+  i historyczne, do limitu 100 odpowiedzi API.
+- **Dla mnie** — ranking kategorii wyliczany z jawnych sygnałów:
+  przeczytane +1, zapisane +3, ukryte −3. To **deterministyczne
+  dopasowanie**, nie wynik generowania LLM i nie model zainteresowań
+  politycznych czy prywatnych cech użytkownika.
+
+**Retencja**: starsze artykuły przechodzą do archiwum automatycznie już na
+etapie filtrowania. Fizyczne czyszczenie nie jest uruchamiane domyślnie:
+
+```dotenv
+NEWS_ACTIVE_DAYS=7
+NEWS_RETENTION_DAYS=90
+NEWS_RETENTION_CLEANUP_ENABLED=false
+```
+
+Jeśli świadomie ustawisz `NEWS_RETENTION_CLEANUP_ENABLED=true`, zadanie
+o 03:15 czasu polskiego usunie niezapisane artykuły dodane co najmniej
+90 dni wcześniej. **Zapisane artykuły są zawsze wyłączone z usuwania**.
+Nie uruchamiaj tego na DEV bez wcześniejszej kopii bazy i akceptacji retencji.
+
+**Bezpieczeństwo bramy**: Alice Web dopuszcza zapisy jedynie do
+`PATCH /api/news/articles/{UUID}/state`, zarządzania źródłami
+`/api/news/admin/sources` i ręcznego importu wybranego źródła
+`/api/news/admin/import/{UUID}`. Operacje administracyjne wymagają tokenu.
+Globalny import RSS i wzbogacanie LLM pozostają niedostępne przez bramę
+Alice Web. Obecny model jest **jednoużytkownikowy** — jeżeli Alice Web ma być
+dostępne publicznie, należy dodatkowo wdrożyć uwierzytelnianie użytkownika
+dla zapisów stanu czytania.
+
+**Wdrożenie**: `./pull-all.ps1`, następnie
+`docker compose --env-file .env up -d --build --no-deps --force-recreate --wait news-service alice-web`.
+Migracja Flyway `V4` tworzy kolumny dla ukrytych artykułów i źródeł,
+zachowując istniejące `is_read`, `is_saved` i pobrane rekordy.
+Bez włączania czyszczenia dane nie zostaną usunięte.
+
 ## Diagnostyka
 
 ```powershell
