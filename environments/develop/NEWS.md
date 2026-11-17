@@ -49,7 +49,7 @@ Nie używaj przykładowych haseł w środowisku produkcyjnym. Zmiana hasła w `.
 1. Uruchamia `postgres` i `rabbitmq` DEV i czeka na ich healthchecki.
 2. W istniejącym kontenerze PostgreSQL uruchamia `09-init-news-database.sh`. Skrypt tworzy rolę i bazę **tylko jeśli nie istnieją**.
 3. Buduje obraz `news-service`, uruchamia go bez restartowania innych mikroserwisów i oczekuje stanu `healthy`.
-4. Sprawdza `/actuator/health/readiness` przez lokalny port z Compose.
+4. Sprawdza `/actuator/health/readiness`, `/api/news/categories` i `/api/news/articles` przez lokalny port z Compose.
 
 **Nie usuwaj wolumenu `postgres_data` ani nie wykonuj `docker compose down -v`.** Skrypty `docker-entrypoint-initdb.d` nie uruchamiają się automatycznie na już istniejącym wolumenie; właśnie dlatego dedykowany skrypt wykonuje inicjalizację jawnie.
 
@@ -72,8 +72,18 @@ Nie używaj `--no-deps` podczas pierwszego uruchomienia zależności. Powyższy 
 Wykonaj dopiero po sprawdzeniu bazy, gotowości i ustawieniu prywatnego `NEWS_ADMIN_TOKEN` (wartość nie może być pusta). Import ręczny działa nawet przy wyłączonym harmonogramie RSS:
 
 ```powershell
-# Zastap <token> swoim sekretem (nie zapisuj sekretu w historii polecen).
-curl.exe -X POST -H "X-News-Admin-Token: <token>" http://127.0.0.1:19090/api/news/admin/import
+# Token wpisywany bez zapisywania go w historii polecen.
+$secureToken = Read-Host "NEWS_ADMIN_TOKEN" -AsSecureString
+$ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureToken)
+try {
+    $plainToken = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr)
+    Invoke-RestMethod -Method Post `
+        -Uri "http://127.0.0.1:19090/api/news/admin/import" `
+        -Headers @{ "X-News-Admin-Token" = $plainToken }
+} finally {
+    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr)
+    Remove-Variable plainToken -ErrorAction SilentlyContinue
+}
 ```
 
 Pole `error` w wyniku powinno być puste dla poprawnie odczytanych źródeł, a `inserted` może wynosić `0`, jeżeli wiadomości już znajdują się w bazie. Nie traktuj samego HTTP 200 jako dowodu, że wszystkie zewnętrzne źródła RSS działały.
