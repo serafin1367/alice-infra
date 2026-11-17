@@ -101,6 +101,19 @@ class NewsDevContractTest(unittest.TestCase):
         self.assertIn('([string]$postStatus).Trim() -ne "403"', script)
         self.assertNotIn("down -v", script)
 
+    def test_polish_title_translation_is_manual_and_token_protected_by_default(self):
+        script = (DEV / "enrich-news.ps1").read_text(encoding="utf-8")
+        self.assertIn("[switch]$ListProfiles", script)
+        self.assertIn("NEWS_LLM_PROFILE_ID", script)
+        self.assertIn("Read-Host \"NEWS_ADMIN_TOKEN\" -AsSecureString", script)
+        self.assertIn("Wpisz TAK", script)
+        self.assertIn('"/api/llm/profiles"', script)
+        self.assertIn('"/api/news/admin/enrichment"', script)
+        self.assertIn("translationStatus", script)
+        self.assertNotIn("NEWS_ENRICHMENT_ENABLED=true", script)
+        self.assertNotIn("compose up", script)
+        self.assertNotIn("rebuild-news", script)
+
     def test_production_compose_not_modified_for_news(self):
         production = (ROOT / "environments" / "production" / "docker-compose.yml").read_text(
             encoding="utf-8"
