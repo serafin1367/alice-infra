@@ -150,9 +150,17 @@ Połączenie jest konfigurowane zmienną
 `ALICE_WEB_NEWS_UPSTREAM=http://news-service:8080` (w Compose jest też
 taki sam bezpieczny domyślny adres).
 
-Nie publikujemy nowego portu do Alice Web ani administracyjnego API RSS.
-Brama odrzuca metody inne niż GET dla prefiksu `/api/news/`. Token
-`NEWS_ADMIN_TOKEN` pozostaje wyłącznie w mikroserwisie News.
+Nie publikujemy dodatkowego portu administracyjnego. Brama odrzuca metody
+inne niż GET dla zwykłego prefiksu `/api/news/`. Do zarządzania źródłami RSS
+Nginx ma osobne, ściśle ograniczone trasy. Przeglądarka wysyła tylko
+`X-Alice-News-Action: 1` (znacznik żądania AJAX, **nie sekret**);
+Nginx dołącza `X-News-Admin-Token` odczytany po stronie serwera z
+`NEWS_GATEWAY_ADMIN_TOKEN`. W Compose jest to **ta sama prywatna wartość**
+`NEWS_ADMIN_TOKEN`, której wymaga mikroserwis News.
+Sekret nie pojawia się w HTML/JS, localStorage, cookies ani żądaniu
+przeglądarki. Przy pustym `NEWS_ADMIN_TOKEN` żądania administracyjne
+pozostają zablokowane (HTTP 503) i należy ustawić sekret raz w `.env`
+oraz odtworzyć kontenery Alice Web i News.
 
 Zaktualizuj kod, następnie w PowerShell uruchom:
 
@@ -267,13 +275,14 @@ przetwarzanie (`NEWS_ENRICHMENT_ENABLED=true`). Nie włączamy go w tym kroku.
 
 ## Zarządzanie źródłami, stany artykułów i archiwum (DEV)
 
-**Źródła RSS**: w Alice Web wejdź w **Aktualności → Źródła RSS**. Wpisz
-`NEWS_ADMIN_TOKEN` z prywatnego `.env` (token pozostaje wyłącznie w
-polu hasła przeglądarki, bez localStorage/cookies), następnie użyj:
+**Źródła RSS**: w Alice Web wejdź w **Aktualności → Źródła RSS**.
+Subskrypcje pobierają się automatycznie; **nie ma pola na token**.
+Wszystkie czynności są dostępne z interfejsu, o ile serwerowy token
+`NEWS_ADMIN_TOKEN` został wcześniej skonfigurowany w prywatnym `.env`:
 - **Pobierz subskrypcje** — sprawdzenie URL kanałów, kategorii, czasu i błędów
   ostatniego pobrania;
 - **Nowa subskrypcja / Edytuj / Włącz / Wyłącz** — zapis do `news_source`;
-- **Pobierz teraz** — pojedynczy import wskazanego kanału, tylko po podaniu tokenu;
+- **Pobierz teraz** — pojedynczy import wskazanego kanału; poświadczenie jest dodawane przez Nginx, nie przez przeglądarkę;
 - **Usuń subskrypcję** — miękka archiwizacja i wyłączenie źródła. Już pobrane
   artykuły **zostają**, a subskrypcję można reaktywować.
 
@@ -339,11 +348,22 @@ Nie uruchamiaj tego na DEV bez wcześniejszej kopii bazy i akceptacji retencji.
 **Bezpieczeństwo bramy**: Alice Web dopuszcza zapisy jedynie do
 `PATCH /api/news/articles/{UUID}/state`, zarządzania źródłami
 `/api/news/admin/sources` i ręcznego importu wybranego źródła
-`/api/news/admin/import/{UUID}`. Operacje administracyjne wymagają tokenu.
+`/api/news/admin/import/{UUID}`. Token administracyjny nadal
+weryfikuje **News**, a Nginx wstrzykuje go tylko dla tych dwóch
+administracyjnych ścieżek. Znacznik `X-Alice-News-Action: 1` jest
+wymagany, aby ograniczyć ataki CSRF przez zwykłe formularze.
+Brak skonfigurowanego sekretu oznacza brak dostępu do zarządzania.
+
+**UWAGA: brak logowania oznacza, że każdy, kto może uzyskać dostęp do
+Alice Web (w tym każdy z zaufanej sieci LAN), może też zarządzać RSS.**
+Znacznik żądania NIE uwierzytelnia użytkownika. Nie udostępniaj tej
+instancji do Internetu ani przez publiczny reverse proxy.
+Jeśli dostęp ma być szerszy niż zaufana sieć LAN, dodaj logowanie lub
+ograniczenie dostępu sieciowego przed bramą, a także zabezpiecz
+zapisy stanu czytania.
+
 Globalny import RSS i wzbogacanie LLM pozostają niedostępne przez bramę
-Alice Web. Obecny model jest **jednoużytkownikowy** — jeżeli Alice Web ma być
-dostępne publicznie, należy dodatkowo wdrożyć uwierzytelnianie użytkownika
-dla zapisów stanu czytania.
+Alice Web.
 
 **Wdrożenie**: `./pull-all.ps1`, następnie
 `docker compose --env-file .env up -d --build --no-deps --force-recreate --wait news-service alice-web`.
