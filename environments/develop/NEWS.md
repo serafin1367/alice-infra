@@ -385,3 +385,44 @@ Przed ponownym `rebuild-all.ps1` zaktualizuj kod News (skrypt `pull-all.ps1` klo
 ## Ograniczenia
 
 Routing `/api/news` i widok Aktualności istnieją już w Alice Web; konfiguracja DEV wymaga wdrożenia przez `rebuild-news-web.ps1`. Port serwisu News pozostaje dostępny tylko z hosta DEV, natomiast żądania z przeglądarki obsługuje brama Alice Web. Zapis na GitHubie oraz pozytywny GitLab CI nie zastępują testu na lokalnym Dockerze.
+
+
+## Alice News V2 — tryb regułowy i warunkowy LLM
+
+Plan wdrożenia: `alice-news-service/docs/ALICE_NEWS_V2_PLAN.md`.
+Migracje Flyway `V6` i `V7` zachowują artykuły i stany czytania.
+
+**Harmonogram**: każdy kanał ma `refreshMinutes` 5–1440 (domyślnie 30 min).
+Scheduler jedynie sprawdza terminy co `NEWS_RSS_POLL_MS=60000`; nie pobiera
+kanału przed jego `next_fetch_at`. Dotychczasowe `NEWS_RSS_INTERVAL_MS`
+pozostaje w starszych skryptach dla kompatybilności, ale nie steruje już
+harmonogramem V2. Klient wysyła `If-None-Match` i `If-Modified-Since`;
+HTTP 304 oznacza brak nowych treści. Dla HTTP 429 obsługiwany jest
+liczbowy `Retry-After` (60–14400 s), a inne błędy mają stopniowy backoff.
+Maksymalnie trzy przekierowania, wyłącznie HTTPS na ten sam host. Import
+automatyczny w DEV pozostaje domyślnie wyłączony.
+
+**Klasyfikacja**: metadane `category` z RSS/Atom i reguły tytułu/opisu
+przypisują maks. 3 tematy oraz sugerowaną geografię. Przy niepewnym wyniku
+status artykułu to `PENDING_LLM`, lecz artykuł pozostaje widoczny.
+Opcjonalne wywołania LLM wymagają prywatnego `NEWS_CLASSIFICATION_ENABLED=true`;
+domyślnie są wyłączone. W tym etapie fallback wykorzystuje profil celu
+`TRANSLATOR` dostępny w Alice LLM, wywoływany tylko dla niejednoznacznych
+wiadomości. Cel można przestawić przez `NEWS_CLASSIFICATION_LLM_PURPOSE`,
+gdy zostanie skonfigurowany wyspecjalizowany profil. Nie ma automatycznego
+ukrywania artykułów.
+
+**Język**: artykuły z `language=en` pozostają w obecnej kolejce tłumaczeń,
+sterowanej `NEWS_ENRICHMENT_ENABLED`; polskie i inne nieangielskie treści
+są wyświetlane w oryginale wraz z opisem RSS. Tłumaczenie i klasyfikacja
+są niezależnymi procesami.
+
+**Stany**: `isArchived` jest ręcznym statusem niezależnym od przeczytania,
+zapisania i ukrycia. Widok archiwum uwzględnia zarówno artykuły archiwalne
+wiekowo, jak i ręcznie przeniesione.
+
+Przed aktualizacją DEV pobierz nowe repozytoria, wykonaj kopię bazy News,
+sprawdź `docker compose --env-file .env config --quiet`, następnie
+przebuduj `news-service` i `alice-web`. Nie aktywuj automatycznie
+`NEWS_RSS_ENABLED` ani `NEWS_CLASSIFICATION_ENABLED` przed testem ręcznym
+nowego importera na DEV. GitLab CI nie potwierdza migracji na działającej bazie.
