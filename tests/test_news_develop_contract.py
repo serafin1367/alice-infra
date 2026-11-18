@@ -45,6 +45,11 @@ class NewsDevContractTest(unittest.TestCase):
             web["ports"][0]
         )
         self.assertIn("ALICE_WEB_BIND_IP=127.0.0.1", self.env_example)
+        # Same private token is injected only at the trusted Nginx gateway.
+        self.assertEqual("${NEWS_ADMIN_TOKEN:-}",
+                         web["environment"]["NEWS_GATEWAY_ADMIN_TOKEN"])
+        self.assertEqual(web["environment"]["NEWS_GATEWAY_ADMIN_TOKEN"],
+                         self.news["environment"]["NEWS_ADMIN_TOKEN"])
 
     def test_background_tasks_require_explicit_opt_in(self):
         self.assertEqual("${NEWS_RSS_ENABLED:-false}",
