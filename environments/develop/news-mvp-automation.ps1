@@ -80,6 +80,50 @@ if ($newText -ceq $original) {
     return
 }
 
+# Ensure the current News container and its read-only API are ready
+# before allowing background jobs to be enabled.
+if ($Enable) {
+    $published = & docker @base port news-service 8080
+    if ($LASTEXITCODE -ne 0 -or -not $published) {
+        throw "Brak uruchomionego news-service. Najpierw wdroz aktualna wersje."
+    }
+    $address = ([string](@($published)[-1])).Trim()
+    if ($address -notmatch ':(\d+)
+    [System.IO.File]::WriteAllText($envFile, $newText, $utf8)
+    $changed = $true
+    & docker @base config --quiet
+    if ($LASTEXITCODE -ne 0) { throw "Blad konfiguracji Docker Compose." }
+    & docker @base up -d --no-deps --force-recreate --wait news-service
+    if ($LASTEXITCODE -ne 0) { throw "News service nie przeszedl healthcheck." }
+    foreach ($name in @("NEWS_RSS_ENABLED", "NEWS_ENRICHMENT_ENABLED",
+                       "NEWS_ENRICHMENT_BATCH_SIZE", "NEWS_ENRICHMENT_INTERVAL_MS")) {
+        $value = & docker @base exec -T news-service printenv $name
+        if ($LASTEXITCODE -ne 0) { throw "Brak aktywnej flagi $name." }
+        Write-Host ("{0}={1}" -f $name, ([string](@($value)[-1])).Trim())
+    }
+    Write-Host "Gotowe: zmieniono jedynie DEV news-service i wybrane flagi .env." -ForegroundColor Green
+} catch {
+    if ($changed) {
+        Write-Warning "Przywracam oryginalny .env i kontener news-service."
+        [System.IO.File]::WriteAllText($envFile, $original, $utf8)
+        & docker @base up -d --no-deps --force-recreate --wait news-service
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warning "Nie udalo sie odtworzyc kontenera - sprawdz logi News."
+        }
+    }
+    throw
+}
+) { throw "Nie mozna ustalic portu News." }
+    $port = $Matches[1]
+    $readiness = Invoke-RestMethod -Uri ("http://127.0.0.1:" + $port + "/actuator/health/readiness") -TimeoutSec 15
+    if ($readiness.status -ne "UP") { throw "News readiness nie jest UP." }
+    $status = Invoke-RestMethod -Uri ("http://127.0.0.1:" + $port + "/api/news/status") -TimeoutSec 15
+    if ([int]$status.enabledSources -lt 1) {
+        throw "Brak aktywnych zrodel RSS. Dodaj lub wlacz subskrypcje przed automatyzacja."
+    }
+    Write-Host ("Aktywne zrodla RSS: " + $status.enabledSources) -ForegroundColor Cyan
+}
+
 $changed = $false
 try {
     [System.IO.File]::WriteAllText($envFile, $newText, $utf8)
