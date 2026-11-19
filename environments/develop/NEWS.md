@@ -6,6 +6,43 @@
 
 # Alice News Service — wdrożenie DEV
 
+## Alice NEWS MVP — przygotowanie i kontrolowane uruchomienie (2026-11-19)
+
+W repozytoriach Alice Web i Alice News dodano odświeżanie czytnika co 60 s przy aktywnej karcie, test przeglądarkowy stanów artykułu i blokadę nakładania się partii tłumaczeń. Streszczenia wygenerowane przez LLM są jawnie oznaczone jako AI; **wynik DONE nie oznacza kontroli faktograficznej**.
+
+**Nie zmieniono domyślnych flag w Compose ani w `.env.example`.** Produkcja pozostaje bez zmian. Najpierw sprawdź odpowiednie wyniki GitLab CI i zaktualizuj obrazy:
+
+```powershell
+./pull-all.ps1
+./rebuild-news-web.ps1
+./news-mvp-automation.ps1
+```
+
+Ostatnia komenda jest tylko do odczytu. Gdy aktualny News jest gotowy i ma aktywne źródła RSS, aktywuj kontrolowaną automatyzację DEV:
+
+```powershell
+./news-mvp-automation.ps1 -Enable
+```
+
+Wymagane potwierdzenie `WLACZ`. Skrypt zmienia wyłącznie flagi `NEWS_RSS_ENABLED=true`, `NEWS_RSS_POLL_MS=60000`, `NEWS_ENRICHMENT_ENABLED=true`, `NEWS_ENRICHMENT_BATCH_SIZE=10`, `NEWS_ENRICHMENT_INTERVAL_MS=600000`, `NEWS_RETENTION_CLEANUP_ENABLED=false`; istniejące hasła i pozostałe ustawienia `.env` pozostają bez zmian. RSS respektuje odstępy czasowe przypisane osobno do każdego źródła (domyślnie 30 min). Harmonogram tłumaczeń używa opóźnienia 10 min **po zakończeniu poprzedniej partii**, nie sztywnej liczby wywołań na godzinę. Skrypt odtwarza wyłącznie `news-service`; przy błędzie stara się przywrócić oryginalny `.env` i wcześniejsze ustawienia.
+
+Raport bez zapisu plików i bez zmian w DB:
+
+```powershell
+./news-mvp-health.ps1
+./diagnose-news-translations.ps1
+```
+
+Powtórz raport po około 24 h; sprawdź nowe rekordy RSS, błędy importu, liczbę przetłumaczonych wiadomości, backlog `PENDING` i `FAILED`. W razie problemu zatrzymaj oba harmonogramy bez kasowania artykułów:
+
+```powershell
+./news-mvp-automation.ps1 -Disable
+```
+
+Potwierdź `WYLACZ`. Dokładne kryteria odbioru zawiera `alice-news-service/docs/MVP.md`. **Nie wykonano jeszcze aktywacji na Twoim Dockerze ani 24-godzinnej obserwacji**.
+
+
+
 **Zakres:** wyłącznie `environments/develop`. Środowisko produkcyjne nie jest zmieniane. Kod aplikacji: [alice-news-service](https://github.com/serafin1367/alice-news-service). GitHub jest źródłem kodu; GitLab wykonuje CI po synchronizacji.
 
 ## Architektura
