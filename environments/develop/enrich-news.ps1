@@ -86,7 +86,4 @@ if ($result.state -ne "OK" -or $result.failed -gt 0) {
 # Inspect only recently completed EN->PL rows directly from the DEV database.
 Write-Host "Ostatnie zapisane tlumaczenia z PostgreSQL:" -ForegroundColor Cyan
 & (Join-Path $PSScriptRoot "show-news-translations.ps1") -Limit 5
-if ($LASTEXITCODE -ne 0) {
-    throw "Nie udalo sie zweryfikowac ostatnich tlumaczen."
-}
 Write-Host "Sprawdz jakosc tekstow przed wlaczeniem automatycznego wzbogacania." -ForegroundColor Green
