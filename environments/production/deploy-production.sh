@@ -26,7 +26,7 @@ declare -A REPOSITORY_URLS=(
   [budget]="http://gitlab.mbb.net.pl/alice/microservices/budget.git"
   [smarthome]="http://gitlab.mbb.net.pl/alice/microservices/smarthome.git"
   [media]="http://gitlab.mbb.net.pl/alice/microservices/media.git"
-  [news]="https://github.com/serafin1367/alice-news-service.git"
+  [news]="http://gitlab.mbb.net.pl/alice/microservices/news.git"
   [node-manager]="http://gitlab.mbb.net.pl/alice/microservices/node-manager.git"
   [alice-web]="http://gitlab.mbb.net.pl/alice/alice-web.git"
 )
