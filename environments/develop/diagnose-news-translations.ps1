@@ -48,9 +48,14 @@ LIMIT 20;
 
 Write-Host "Alice NEWS - diagnostyka tylko do odczytu (DEV)." -ForegroundColor Cyan
 Write-Host "Kontrola konfiguracji kontenera (bez sekretow):"
-$flags = & docker @compose exec -T news-service sh -c 'printf "NEWS_ENRICHMENT_ENABLED=%s\nNEWS_ENRICHMENT_BATCH_SIZE=%s\n" "$NEWS_ENRICHMENT_ENABLED" "$NEWS_ENRICHMENT_BATCH_SIZE"'
-if ($LASTEXITCODE -ne 0) { throw "Nie mozna odczytac flag kontenera news-service." }
-$flags | ForEach-Object { Write-Host $_ }
+foreach ($name in @("NEWS_ENRICHMENT_ENABLED", "NEWS_ENRICHMENT_BATCH_SIZE")) {
+    # Avoid sh -c quoting and newline escapes through Windows PowerShell 5.1.
+    $output = & docker @compose exec -T news-service printenv $name
+    if ($LASTEXITCODE -ne 0) {
+        throw "Nie mozna odczytac $name z kontenera news-service."
+    }
+    Write-Host ("{0}={1}" -f $name, ([string](@($output)[-1])).Trim())
+}
 
 Write-Host "Statystyki bazy (bez tytulow artykulow):" -ForegroundColor Cyan
 $sql | & docker @compose exec -T postgres sh -c 'exec psql -X -v ON_ERROR_STOP=1 -U "$NEWS_DB_USERNAME" -d "$NEWS_DB_NAME" -f -'
