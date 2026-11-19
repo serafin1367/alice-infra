@@ -1,3 +1,5 @@
+> **Diagnostyka tłumaczeń (2026-11-19):** z tego katalogu uruchom `./diagnose-news-translations.ps1`. Skrypt wyświetla na standardowym wyjściu wyłącznie zagregowane statystyki bazy `alice_news` i flagi wzbogacania działającego kontenera. Nie wymaga tokenu administratora, nie wywołuje LLM ani nie zmienia danych. Wynik `und` oznacza brak ustalonego języka artykułu; nie należy automatycznie traktować go jako angielskiego. Dla źródeł o znanym języku można ustawić język w panelu RSS na przyszłe importy. **Zmiana języka źródła nie naprawia już zapisanych rekordów**; ewentualną korektę danych należy przygotować i zatwierdzić osobno po przeglądzie wyników. Sprawdzenie profilu tłumacza: `./enrich-news.ps1 -ShowTranslator` (tylko odczyt).
+
 # Alice News Service — wdrożenie DEV
 
 **Zakres:** wyłącznie `environments/develop`. Środowisko produkcyjne nie jest zmieniane. Kod aplikacji: [alice-news-service](https://github.com/serafin1367/alice-news-service). GitHub jest źródłem kodu; GitLab wykonuje CI po synchronizacji.
