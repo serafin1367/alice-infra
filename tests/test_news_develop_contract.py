@@ -125,6 +125,9 @@ class NewsDevContractTest(unittest.TestCase):
 
     def test_translation_diagnostics_are_read_only_and_do_not_expose_secrets(self):
         script = (DEV / "diagnose-news-translations.ps1").read_text(encoding="utf-8")
+        # Windows PowerShell 5.1 decodes UTF-8 without BOM as a legacy codepage.
+        # Smart punctuation (especially a right double quote) can break parsing.
+        self.assertTrue(script.isascii(), "Use ASCII-only PowerShell source for PS 5.1")
         self.assertIn('docker @compose exec -T postgres', script)
         self.assertIn('NEWS_DB_USERNAME', script)
         self.assertIn('NEWS_DB_NAME', script)
