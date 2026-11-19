@@ -26,6 +26,7 @@ declare -A REPOSITORY_URLS=(
   [budget]="http://gitlab.mbb.net.pl/alice/microservices/budget.git"
   [smarthome]="http://gitlab.mbb.net.pl/alice/microservices/smarthome.git"
   [media]="http://gitlab.mbb.net.pl/alice/microservices/media.git"
+  [news]="https://github.com/serafin1367/alice-news-service.git"
   [node-manager]="http://gitlab.mbb.net.pl/alice/microservices/node-manager.git"
   [alice-web]="http://gitlab.mbb.net.pl/alice/alice-web.git"
 )
@@ -44,6 +45,7 @@ REPOSITORIES=(
   "$WORKSPACE_DIR/microservices/budget"
   "$WORKSPACE_DIR/microservices/smarthome"
   "$WORKSPACE_DIR/microservices/media"
+  "$WORKSPACE_DIR/microservices/news"
   "$WORKSPACE_DIR/microservices/node-manager"
   "$WORKSPACE_DIR/alice-web"
 )
@@ -121,6 +123,7 @@ docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.e
 docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/07-init-health-database.sh
 docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/08-init-budget-database.sh
 docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/09-init-media-database.sh
+docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/10-init-news-database.sh
 
 echo "Aktualizacja uslug bez usuwania wolumenow"
 docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" up -d --no-build
