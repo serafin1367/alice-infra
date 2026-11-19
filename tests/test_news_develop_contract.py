@@ -123,6 +123,26 @@ class NewsDevContractTest(unittest.TestCase):
         self.assertNotIn("compose up", script)
         self.assertNotIn("rebuild-news", script)
 
+    def test_translation_diagnostics_are_read_only_and_do_not_expose_secrets(self):
+        script = (DEV / "diagnose-news-translations.ps1").read_text(encoding="utf-8")
+        self.assertIn('docker @compose exec -T postgres', script)
+        self.assertIn('NEWS_DB_USERNAME', script)
+        self.assertIn('NEWS_DB_NAME', script)
+        self.assertIn('translation_status', script)
+        self.assertIn('enrichment_status', script)
+        self.assertIn('enrichment_attempts', script)
+        self.assertIn("language IN ('und', 'auto')", script)
+        self.assertIn('NEWS_ENRICHMENT_ENABLED', script)
+        self.assertIn('ON_ERROR_STOP=1', script)
+        self.assertNotIn('NEWS_ADMIN_TOKEN', script)
+        self.assertNotIn('NEWS_DB_PASSWORD', script)
+        self.assertNotIn('enrichment_error', script)
+        self.assertNotIn('Read-Host', script)
+        self.assertNotIn('Invoke-RestMethod', script)
+        self.assertNotIn('UPDATE news_article', script)
+        self.assertNotIn('DELETE FROM', script)
+        self.assertNotIn('INSERT INTO', script)
+
     def test_reader_refresh_archive_and_retention_are_safe_on_dev(self):
         env = self.news["environment"]
         self.assertEqual("${NEWS_RSS_ENABLED:-false}", env["NEWS_RSS_ENABLED"])
