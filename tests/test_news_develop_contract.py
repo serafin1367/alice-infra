@@ -128,6 +128,7 @@ class NewsDevContractTest(unittest.TestCase):
         script = (DEV / "show-news-translations.ps1").read_text(encoding="utf-8")
         self.assertTrue(script.isascii(), "PowerShell 5.1 helper must be ASCII")
         self.assertIn('[ValidateRange(1, 20)]', script)
+        self.assertIn("'@\n$sql = $sql.Replace", script)
         self.assertIn("translation_status = 'DONE'", script)
         self.assertIn("enrichment_status = 'DONE'", script)
         self.assertIn("title_pl IS NOT NULL", script)
