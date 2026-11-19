@@ -35,7 +35,7 @@ LIMIT __LIMIT__;
 
 Write-Host ("Alice NEWS - ostatnie {0} zapisanych tlumaczen (tylko do odczytu)." -f $Limit) -ForegroundColor Cyan
 # Explicit UTF-8 for Polish output where the terminal supports it.
-[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 $sql | & docker @compose exec -T postgres sh -c 'exec psql -X -v ON_ERROR_STOP=1 -U "$NEWS_DB_USERNAME" -d "$NEWS_DB_NAME" -f -'
 if ($LASTEXITCODE -ne 0) {
     throw "Nie mozna odczytac tlumaczen z bazy news."
