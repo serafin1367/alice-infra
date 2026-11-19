@@ -46,7 +46,7 @@ ORDER BY artykuly_z_nieustalonym_jezykiem DESC, s.name
 LIMIT 20;
 '@
 
-Write-Host "Alice NEWS — diagnostyka tylko do odczytu (DEV)." -ForegroundColor Cyan
+Write-Host "Alice NEWS - diagnostyka tylko do odczytu (DEV)." -ForegroundColor Cyan
 Write-Host "Kontrola konfiguracji kontenera (bez sekretow):"
 $flags = & docker @compose exec -T news-service sh -c 'printf "NEWS_ENRICHMENT_ENABLED=%s\nNEWS_ENRICHMENT_BATCH_SIZE=%s\n" "$NEWS_ENRICHMENT_ENABLED" "$NEWS_ENRICHMENT_BATCH_SIZE"'
 if ($LASTEXITCODE -ne 0) { throw "Nie mozna odczytac flag kontenera news-service." }
