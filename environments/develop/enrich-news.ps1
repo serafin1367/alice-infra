@@ -82,6 +82,11 @@ Write-Host "Wynik partii: $($result.state); przetworzone=$($result.processed); O
 if ($result.state -ne "OK" -or $result.failed -gt 0) {
     throw "Partia nie zakonczyla sie poprawnie. Sprawdz logi news-service, profil LLM i PostgreSQL."
 }
-$articles = @(Invoke-RestMethod -Method Get -Uri "$newsUrl/api/news/articles?limit=5" -TimeoutSec 15)
-$articles | Select-Object -First 5 title, originalTitle, translationStatus | Format-Table -Wrap
-Write-Host "W Alice Web polskie tytuly pojawiaja sie przy translationStatus=DONE." -ForegroundColor Green
+# The API's newest five articles are not necessarily the translated batch.
+# Inspect only recently completed EN->PL rows directly from the DEV database.
+Write-Host "Ostatnie zapisane tlumaczenia z PostgreSQL:" -ForegroundColor Cyan
+& (Join-Path $PSScriptRoot "show-news-translations.ps1") -Limit 5
+if ($LASTEXITCODE -ne 0) {
+    throw "Nie udalo sie zweryfikowac ostatnich tlumaczen."
+}
+Write-Host "Sprawdz jakosc tekstow przed wlaczeniem automatycznego wzbogacania." -ForegroundColor Green
