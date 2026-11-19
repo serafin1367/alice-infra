@@ -19,6 +19,7 @@ $sql = @'
 \x on
 SELECT enriched_at AS data_tlumaczenia,
        title AS tytul_oryginalny,
+       excerpt_original AS fragment_rss_oryginalny,
        title_pl AS tytul_polski,
        summary_pl AS streszczenie_polskie,
        importance_score AS ocena_ai,
