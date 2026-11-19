@@ -136,6 +136,8 @@ class NewsDevContractTest(unittest.TestCase):
         self.assertIn('enrichment_attempts', script)
         self.assertIn("language IN ('und', 'auto')", script)
         self.assertIn('NEWS_ENRICHMENT_ENABLED', script)
+        self.assertIn('docker @compose exec -T news-service printenv $name', script)
+        self.assertNotIn("sh -c 'printf", script)
         self.assertIn('ON_ERROR_STOP=1', script)
         self.assertNotIn('NEWS_ADMIN_TOKEN', script)
         self.assertNotIn('NEWS_DB_PASSWORD', script)
