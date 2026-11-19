@@ -228,7 +228,7 @@ Przed aktualizacją wykonaj backup. Dodaj `MEDIA_DB_PASSWORD` do produkcyjnego `
 
 ## Alice NEWS na produkcji
 
-Kod jest pobierany z `https://github.com/serafin1367/alice-news-service.git` do
+Kod jest pobierany z `http://gitlab.mbb.net.pl/alice/microservices/news.git` do
 `microservices/news` podczas `deploy-production.sh`. Dla prywatnego repozytorium
 Git na serwerze wymaga dostępu. Skrypt respektuje istniejące `origin`.
 
