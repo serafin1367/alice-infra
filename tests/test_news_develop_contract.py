@@ -169,6 +169,30 @@ class NewsDevContractTest(unittest.TestCase):
         self.assertNotIn('DELETE FROM', script)
         self.assertNotIn('INSERT INTO', script)
 
+    def test_news_mvp_automation_requires_opt_in_and_is_dev_only(self):
+        script = (DEV / "news-mvp-automation.ps1").read_text(encoding="utf-8")
+        self.assertTrue(script.isascii(), "Windows PowerShell 5.1 source must be ASCII")
+        self.assertIn("[switch]$Enable", script)
+        self.assertIn("[switch]$Disable", script)
+        self.assertIn('Read-Host "Aby wlaczyc automatyzacje DEV, wpisz WLACZ"', script)
+        self.assertIn('NEWS_RSS_ENABLED = "true"', script)
+        self.assertIn('NEWS_RSS_POLL_MS = "60000"', script)
+        self.assertIn('NEWS_ENRICHMENT_ENABLED = "true"', script)
+        self.assertIn('NEWS_ENRICHMENT_BATCH_SIZE = "10"', script)
+        self.assertIn('NEWS_ENRICHMENT_INTERVAL_MS = "600000"', script)
+        self.assertIn('NEWS_RETENTION_CLEANUP_ENABLED = "false"', script)
+        self.assertIn('"--no-deps", "--force-recreate", "--wait", "news-service"', script)
+        self.assertIn('WriteAllText($envFile, $original, $utf8)', script)
+        self.assertNotIn("down -v", script)
+        self.assertNotIn("production", script)
+        self.assertNotIn("NEWS_ADMIN_TOKEN", script)
+        self.assertNotIn("NEWS_DB_PASSWORD", script)
+        # Existing defaults remain disabled until explicit invocation.
+        self.assertEqual("${NEWS_ENRICHMENT_ENABLED:-false}",
+                         self.news["environment"]["NEWS_ENRICHMENT_ENABLED"])
+        self.assertEqual("${NEWS_RSS_ENABLED:-false}",
+                         self.news["environment"]["NEWS_RSS_ENABLED"])
+
     def test_reader_refresh_archive_and_retention_are_safe_on_dev(self):
         env = self.news["environment"]
         self.assertEqual("${NEWS_RSS_ENABLED:-false}", env["NEWS_RSS_ENABLED"])
