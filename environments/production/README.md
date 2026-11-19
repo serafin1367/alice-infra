@@ -14,6 +14,7 @@ Ten katalog zawiera docelowy runtime produkcyjny z aplikacją Alice Web i jej br
 - `budget-service`
 - `smarthome-service`
 - `media-service`
+- `news-service`
 
 ## Struktura
 
@@ -223,3 +224,25 @@ Media jest budowany z `microservices/media`, automatycznie klonowanego przez `de
 Media nasłuchuje na 8096 wyłącznie w sieci Compose; Alice Web używa `MEDIA_UPSTREAM=http://media-service:8096`. Brak mapowania portu na hosta jest celowy: backend Media nie zapewnia zweryfikowanego uwierzytelnienia API. Aby korzystać z panelu, należy również upewnić się, że wdrożony Alice Web rzeczywiście odczytuje `MEDIA_UPSTREAM` i obsługuje proxy `/api/media/`. Sama zmienna środowiskowa nie tworzy routingu.
 
 Przed aktualizacją wykonaj backup. Dodaj `MEDIA_DB_PASSWORD` do produkcyjnego `.env` i wdrażaj standardowym `./deploy-production.sh`. Po wdrożeniu sprawdź `docker compose ps media-service`, `docker compose logs --tail=100 media-service` i z sieci kontenerów endpoint `http://media-service:8096/api/media/health`. Endpoint potwierdza odpowiedź HTTP, ale nie pełną sprawność Node/RabbitMQ/DB. Skrypt backupu wykorzystujący dump wszystkich baz PostgreSQL obejmie nową bazę; zweryfikuj to w archiwum i wykonaj próbę odtworzenia.
+
+
+## Alice NEWS na produkcji
+
+Kod jest pobierany z `https://github.com/serafin1367/alice-news-service.git` do
+`microservices/news` podczas `deploy-production.sh`. Dla prywatnego repozytorium
+Git na serwerze wymaga dostępu. Skrypt respektuje istniejące `origin`.
+
+Wymagane w prywatnym `.env`: `NEWS_DB_PASSWORD` i `NEWS_ADMIN_TOKEN`.
+PostgreSQL tworzy brakującą bazę i rolę przez
+`postgres/init/10-init-news-database.sh` uruchamiany także na istniejącym
+wolumenie. Dla istniejącej roli skrypt nie zmienia hasła — musi ono odpowiadać
+wartości w `.env`. Migracje tabel wykonuje Flyway podczas startu NEWS.
+
+Pierwszy start pozostawia `NEWS_RSS_ENABLED=false`,
+`NEWS_CLASSIFICATION_ENABLED=false` i `NEWS_ENRICHMENT_ENABLED=false`.
+Po sprawdzeniu jakości tłumaczeń i stanu GitLab CI włączaj harmonogramy
+stopniowo. API NEWS nasłuchuje na hoście wyłącznie pod `127.0.0.1:19090`.
+
+Weryfikacja: `docker compose config -q`,
+`docker compose ps news-service`,
+`curl -f http://127.0.0.1:19090/actuator/health/readiness`.
