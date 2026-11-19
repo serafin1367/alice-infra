@@ -31,7 +31,8 @@ WHERE language = 'en'
   AND summary_pl IS NOT NULL
 ORDER BY enriched_at DESC NULLS LAST, created_at DESC
 LIMIT __LIMIT__;
-'@.Replace("__LIMIT__", [string]$Limit)
+'@
+$sql = $sql.Replace("__LIMIT__", [string]$Limit)
 
 Write-Host ("Alice NEWS - ostatnie {0} zapisanych tlumaczen (tylko do odczytu)." -f $Limit) -ForegroundColor Cyan
 # Explicit UTF-8 for Polish output where the terminal supports it.
