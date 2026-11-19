@@ -131,6 +131,7 @@ class NewsDevContractTest(unittest.TestCase):
         self.assertIn("'@\n$sql = $sql.Replace", script)
         self.assertIn("translation_status = 'DONE'", script)
         self.assertIn("enrichment_status = 'DONE'", script)
+        self.assertIn("excerpt_original AS fragment_rss_oryginalny", script)
         self.assertIn("title_pl IS NOT NULL", script)
         self.assertIn("summary_pl IS NOT NULL", script)
         self.assertIn("ORDER BY enriched_at DESC", script)
