@@ -196,6 +196,21 @@ class NewsDevContractTest(unittest.TestCase):
         self.assertEqual("${NEWS_RSS_ENABLED:-false}",
                          self.news["environment"]["NEWS_RSS_ENABLED"])
 
+    def test_news_mvp_health_report_is_read_only_and_covers_imports_and_enrichment(self):
+        script = (DEV / "news-mvp-health.ps1").read_text(encoding="utf-8")
+        self.assertTrue(script.isascii())
+        self.assertIn("FROM news_import_run", script)
+        self.assertIn("INTERVAL '24 hours'", script)
+        self.assertIn("FROM news_article", script)
+        self.assertIn("FROM news_source", script)
+        self.assertIn("NEWS_RETENTION_CLEANUP_ENABLED", script)
+        self.assertIn("ON_ERROR_STOP=1", script)
+        self.assertNotIn("NEWS_ADMIN_TOKEN", script)
+        self.assertNotIn("NEWS_DB_PASSWORD", script)
+        self.assertNotIn("INSERT INTO", script)
+        self.assertNotIn("UPDATE news_article", script)
+        self.assertNotIn("DELETE FROM", script)
+
     def test_reader_refresh_archive_and_retention_are_safe_on_dev(self):
         env = self.news["environment"]
         self.assertEqual("${NEWS_RSS_ENABLED:-false}", env["NEWS_RSS_ENABLED"])
