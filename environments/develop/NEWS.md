@@ -329,10 +329,13 @@ Wszystkie czynności są dostępne z interfejsu, o ile serwerowy token
 - **Usuń subskrypcję** — miękka archiwizacja i wyłączenie źródła. Już pobrane
   artykuły **zostają**, a subskrypcję można reaktywować.
 
-Źródła RSS wymagają publicznego HTTPS (port 443). Odrzucane są przekierowania
-i niepubliczne adresy wykryte przez klienta pobierającego. Nowy kanał
-nie uruchamia automatycznego importu, jeśli harmonogram globalnie jest
-wyłączony.
+Źródła RSS mogą korzystać z publicznego HTTP (port 80) lub HTTPS (port 443).
+Klient blokuje połączenia do adresów prywatnych/lokalnych, poświadczenia
+w URL i przekierowania poza pierwotny host; dopuszcza maksymalnie trzy
+przekierowania do tego samego hosta z ponowną weryfikacją adresu.
+W przypadku HTTP treść kanału nie jest szyfrowana i może zostać zmieniona
+w transmisji. Nowy kanał nie uruchamia automatycznego importu, jeśli
+harmonogram globalnie jest wyłączony.
 
 **Automatyczny import**: na DEV `NEWS_RSS_ENABLED=false`, więc harmonogram
 jest wyłączony. Aby go włączyć, po pierwszym udanym ręcznym imporcie ustaw
@@ -442,7 +445,7 @@ pozostaje w starszych skryptach dla kompatybilności, ale nie steruje już
 harmonogramem V2. Klient wysyła `If-None-Match` i `If-Modified-Since`;
 HTTP 304 oznacza brak nowych treści. Dla HTTP 429 obsługiwany jest
 liczbowy `Retry-After` (60–14400 s), a inne błędy mają stopniowy backoff.
-Maksymalnie trzy przekierowania, wyłącznie HTTPS na ten sam host. Import
+Maksymalnie trzy przekierowania, HTTP lub HTTPS, tylko na ten sam host. Import
 automatyczny w DEV pozostaje domyślnie wyłączony.
 
 **Klasyfikacja**: metadane `category` z RSS/Atom i reguły tytułu/opisu
