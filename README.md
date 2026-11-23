@@ -1,5 +1,18 @@
 # ALICE Infra
 
+## Alice Speech — TTS przez RabbitMQ (2026-11-23)
+
+W profilach Docker Compose dostępna jest opcjonalna usługa `speech-service`
+(`COMPOSE_PROFILES=speech`). Zapewnia backend do testowego generowania MP3
+przez FormsSpeechMicroservice na Windows. Alice Web korzysta z
+`SPEECH_UPSTREAM` i `SPEECH_GATEWAY_TOKEN`; pusty token celowo blokuje
+proxy kodem HTTP 503. Nowe woluminy `speech_data` są trwałe.
+
+Dokładna konfiguracja, diagnostyka HTTP 503 i procedura wdrożenia:
+[**Alice Speech — wdrożenie**](docs/SPEECH_DEPLOYMENT.md).
+
+
+
 ## AliceAI — cały ekosystem
 
 **AliceAI** to modularna platforma osobistego asystenta: interfejs WWW, aplikacja desktopowa i rozszerzenie przeglądarki korzystają z niezależnych mikroserwisów, lokalnych modeli LLM oraz integracji z urządzeniami i usługami zewnętrznymi. Projekt obejmuje wiedzę, pocztę, kalendarz, pogodę, finanse, zdrowie, zakupy, media, SmartHome oraz zdalne węzły wykonawcze. **Alice Infra** zapewnia wspólną warstwę infrastrukturalną i dokumentację środowisk.
