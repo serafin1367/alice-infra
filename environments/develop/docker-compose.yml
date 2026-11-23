@@ -14,6 +14,8 @@ services:
       MAIL_UPSTREAM: ${ALICE_WEB_MAIL_UPSTREAM:-http://mail-service:8083}
       WEATHER_UPSTREAM: ${ALICE_WEB_WEATHER_UPSTREAM:-http://weather-service:8081}
       NEWS_UPSTREAM: ${ALICE_WEB_NEWS_UPSTREAM:-http://news-service:8080}
+      SPEECH_UPSTREAM: ${ALICE_WEB_SPEECH_UPSTREAM:-http://speech-service:8098}
+      SPEECH_GATEWAY_TOKEN: ${SPEECH_API_TOKEN:-}
       # Same private credential as news-service; never embedded in public JS.
       NEWS_GATEWAY_ADMIN_TOKEN: ${NEWS_ADMIN_TOKEN:-}
       LLM_UPSTREAM: ${ALICE_WEB_LLM_UPSTREAM:-http://llm-service:8084}
@@ -101,6 +103,40 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+
+  # TTS is opt-in so existing deployments without the Speech repo/token remain unaffected.
+  # Activate with COMPOSE_PROFILES=speech and a nonempty SPEECH_API_TOKEN in .env.
+  speech-service:
+    profiles: ["speech"]
+    build:
+      context: ../../../microservices/speech
+    container_name: ${SPEECH_CONTAINER_NAME:-alice-dev-speech-service}
+    hostname: speech-service
+    restart: unless-stopped
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      PORT: "8098"
+      SPEECH_HTTP_HOST: "0.0.0.0"
+      SPEECH_API_TOKEN: ${SPEECH_API_TOKEN:-}
+      SPEECH_DATA_DIR: /data/jobs
+      SPEECH_PREFERRED_TTS_NODE: ${SPEECH_PREFERRED_TTS_NODE:-}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      RABBITMQ_VHOST: ${RABBITMQ_VHOST:-alice}
+    volumes:
+      - speech_data:/data
+    expose:
+      - "8098"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8098/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -544,6 +580,7 @@ volumes:
   dashboard_data:
   postgres_data:
   rabbitmq_data:
+  speech_data:
   work_attachments:
   knowledge_projects:
   smarthome_data:
