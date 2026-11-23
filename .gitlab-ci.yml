@@ -71,3 +71,27 @@ infra-news-dev-contract:
     - |
       docker run --rm -v "$CI_PROJECT_DIR:/repo:ro" -w /repo python:3.12-alpine \
         sh -ec 'pip install --quiet --disable-pip-version-check --no-cache-dir PyYAML && python -m unittest discover -s tests -p "test_*.py"'
+
+# Contract-only validation for optional Alice Speech in both Compose profiles.
+# Never builds/starts containers; checks all interpolated service definitions.
+infra-compose-speech:
+  stage: validate
+  tags: [alice-quality-docker]
+  script:
+    - 'command -v docker >/dev/null || { echo "Docker CLI unavailable"; exit 1; }'
+    - 'docker compose version >/dev/null || { echo "Docker Compose unavailable"; exit 1; }'
+    - |
+      set -eu
+      for target in develop production; do
+        echo "Validating Alice Speech profile: $target"
+        docker compose --profile speech \
+          --project-directory "$CI_PROJECT_DIR/environments/$target" \
+          --env-file "$CI_PROJECT_DIR/environments/$target/.env.example" \
+          -f "$CI_PROJECT_DIR/environments/$target/docker-compose.yml" \
+          config --quiet
+        docker compose --profile speech \
+          --project-directory "$CI_PROJECT_DIR/environments/$target" \
+          --env-file "$CI_PROJECT_DIR/environments/$target/.env.example" \
+          -f "$CI_PROJECT_DIR/environments/$target/docker-compose.yml" \
+          config --services | grep -qx 'speech-service'
+      done
