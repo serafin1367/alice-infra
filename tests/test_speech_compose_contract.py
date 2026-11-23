@@ -44,7 +44,9 @@ class SpeechComposeContractTest(unittest.TestCase):
         self.assertIn('SPEECH_API_TOKEN', source)
         self.assertIn('REPOSITORIES+=("$WORKSPACE_DIR/microservices/speech")', source)
         self.assertIn('https://github.com/serafin1367/alice-speech-service.git', source)
-        self.assertNotIn('down -v', source.replace('# volumes are retained.',''))
+        commands = [line.strip() for line in source.splitlines()
+                    if line.strip().startswith("docker compose")]
+        self.assertFalse(any("down -v" in command for command in commands))
 
 
 if __name__ == "__main__":
