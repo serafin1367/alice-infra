@@ -16,6 +16,52 @@ Po tej zmianie DEV i PROD zawierają opcjonalny profil `speech`.
 **Ważne:** profil jest domyślnie wyłączony, żeby nie zepsuć już
 działających usług. Nie usuwać kontroli tokenu w Nginx!
 
+## Wdrożenie produkcyjne tylko Alice Speech — bez restartu całej platformy
+
+Do wdrażania TTS (Studio MP3, Alice NEWS, historia i retencja) używaj
+dedykowanego skryptu
+[`deploy-speech-production.sh`](../environments/production/deploy-speech-production.sh).
+W przeciwieństwie do `deploy-production.sh` **nie aktualizuje on wszystkich
+mikroserwisów**. Ogólny skrypt został dodatkowo naprawiony i objęty
+kontrolą składni, ale nadal dotyczy całego środowiska.
+
+Przed wdrożeniem: synchronizacja najnowszych commitów GitHub → GitLab,
+walidacja CI, aktualizacja repo `alice-infra` na produkcji, wpisy
+`COMPOSE_PROFILES=speech` i `SPEECH_API_TOKEN=<min. 32 znaki>` w
+prywatnym `.env`, działający produkcyjny RabbitMQ. Ustawienia workerów
+Windows DEV **nie** przenoszą się automatycznie do produkcyjnego brokera.
+Udostępniaj AMQP tylko przez zaufaną sieć/VPN z restrykcjami zapory;
+samo mapowanie portu 5672 nie zapewnia szyfrowania TLS.
+
+```bash
+cd /opt/alice/infra/environments/production
+./deploy-speech-production.sh --check
+./deploy-speech-production.sh --deploy
+```
+
+Ścieżka instalacji na serwerze może być inna. Tryb `--check` niczego nie
+aktualizuje. Tryb `--deploy` pobiera tylko Speech i Web z GitLab,
+**przed** ponownym uruchomieniem tworzy kopię istniejącego woluminu
+`<COMPOSE_PROJECT_NAME>_speech_data` w
+`/var/backups/alice/speech` i przerywa, jeśli backup się nie uda.
+Wykorzystuje obraz `alpine:3.21` do kopii woluminu; na serwerze
+musi działać Docker. Jeśli nazwa działającego projektu Compose nie
+jest `production`, przekaż faktyczną wartość
+`COMPOSE_PROJECT_NAME`, aby wskazać właściwe kontenery i wolumin.
+
+Następnie skrypt buduje i odtwarza **tylko** `speech-service`
+i `alice-web`, sprawdza ich stan i API historii. W razie problemów
+nie wykonuje automatycznego rollbacku. Backupy produkcyjne
+`backup-production.sh` obejmują teraz również katalog MP3
+`docker/speech-data`, gdy kontener Speech jest uruchomiony.
+
+**Pierwszy start usuwa stare nagrania zgodnie z retencją.** Jeśli
+potrzebujesz zachować oryginały do odrębnej analizy, ustaw tymczasowo
+`SPEECH_RETENTION_ENABLED=false`, wykonaj backup i dopiero po
+zatwierdzeniu włącz limit 100 zadań / 14 dni / 512 MB.
+
+P8 (monitoring w Alice Web) jest planem, nie częścią tego wdrożenia.
+
 ## Włączenie profilu produkcyjnego
 
 Repozytoria ułożone tak jak dotychczas, w szczególności:
