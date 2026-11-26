@@ -68,6 +68,8 @@ infra-news-dev-contract:
   script:
     - 'command -v docker >/dev/null || { echo "Docker CLI unavailable"; exit 1; }'
     - 'bash -n environments/develop/postgres/init/09-init-news-database.sh'
+    - 'bash -n scripts/sync.sh'
+    - 'bash scripts/sync.sh --help > /dev/null'
     - |
       docker run --rm -v "$CI_PROJECT_DIR:/repo:ro" -w /repo python:3.12-alpine \
         sh -ec 'pip install --quiet --disable-pip-version-check --no-cache-dir PyYAML && python -m unittest discover -s tests -p "test_*.py"'
