@@ -24,6 +24,16 @@ class SpeechComposeContractTest(unittest.TestCase):
                 self.assertEqual(speech["environment"]["SPEECH_HTTP_HOST"], "0.0.0.0")
                 self.assertEqual(speech["environment"]["SPEECH_DATA_DIR"], "/data/jobs")
                 self.assertIn("SPEECH_API_TOKEN", speech["environment"])
+                limits = {
+                    "SPEECH_RETENTION_ENABLED": "true",
+                    "SPEECH_RETENTION_MAX_JOBS": "100",
+                    "SPEECH_RETENTION_MAX_DAYS": "14",
+                    "SPEECH_RETENTION_MAX_AUDIO_MB": "512",
+                    "SPEECH_RETENTION_CLEANUP_MINUTES": "60",
+                }
+                for key, default in limits.items():
+                    with self.subTest(env=env, setting=key):
+                        self.assertEqual(speech["environment"][key], "${" + key + ":-" + default + "}")
                 self.assertIn("RABBITMQ_USERNAME", speech["environment"])
                 self.assertIn("RABBITMQ_PASSWORD", speech["environment"])
                 self.assertIn("rabbitmq", speech["depends_on"])
@@ -36,6 +46,8 @@ class SpeechComposeContractTest(unittest.TestCase):
                 dotenv = (basedir / ".env.example").read_text(encoding="utf-8")
                 self.assertIn("# COMPOSE_PROFILES=speech", dotenv)
                 self.assertIn("SPEECH_API_TOKEN=", dotenv)
+                for key, default in limits.items():
+                    self.assertIn(key + "=" + default, dotenv)
 
     def test_production_script_only_provisions_speech_when_enabled(self):
         source = (ROOT / "environments/production/deploy-production.sh").read_text(encoding="utf-8")
