@@ -99,6 +99,46 @@ Interpretacja:
 - `/api/speech/tts/workers` z przeglądarki powinno zwrócić
   `{"workers":[]}` (HTTP 200) zanim dołączy pierwszy worker.
 
+## Retencja MP3 i historii — ochrona woluminu speech_data
+
+Od 2026-11-26 backend Alice Speech domyślnie automatycznie usuwa
+starsze zakończone zadania i ich MP3. **Przed pierwszą przebudową
+kontenera wykonaj kopię woluminu `speech_data`, jeśli chcesz zachować
+dotychczasowe nagrania.** Czyszczenie przy pierwszym starcie jest
+nieodwracalne; nie stosuj `down -v`.
+
+W prywatnym `.env` (DEV albo PROD) można ustawić:
+
+```dotenv
+SPEECH_RETENTION_ENABLED=true
+SPEECH_RETENTION_MAX_JOBS=100
+SPEECH_RETENTION_MAX_DAYS=14
+SPEECH_RETENTION_MAX_AUDIO_MB=512
+SPEECH_RETENTION_CLEANUP_MINUTES=60
+```
+
+Polityka obowiązuje dla zakończonych `DONE` i `FAILED`;
+nie dotyczy aktywnych `QUEUED` i `RUNNING`. Limity zadań,
+wieku i sumarycznej wielkości MP3 działają jednocześnie.
+Wartość `0` wyłącza pojedynczy limit; `ENABLED=false`
+wyłącza czyszczenie. Czyszczenie odbywa się na starcie, po
+zakończeniu zadania i cyklicznie. W Alice Web w panelu
+**Ustawienia → Mowa → Historia** widać bieżące limity i
+orientacyjną zajętość MP3.
+
+W DEV po aktualizacji repozytoriów `alice-infra` i
+`alice-speech-service` oraz ewentualnej edycji `.env`:
+
+```powershell
+docker compose --profile speech --env-file .env config -q
+docker compose --profile speech --env-file .env up -d --build --no-deps --force-recreate speech-service
+Invoke-RestMethod 'http://127.0.0.1:19080/api/speech/tts/history?limit=1' | ConvertTo-Json -Depth 5
+```
+
+Dla podglądu limitów w Alice Web trzeba również przebudować
+`alice-web` po pobraniu jego najnowszego `main`.
+Synchronizacja GitHub → GitLab sama nie wdraża obrazów Docker.
+
 ## Bezpieczeństwo, trwałość i CI
 
 Trwałe pliki MP3 i statusy trzymane są w woluminie `speech_data:/data`,
