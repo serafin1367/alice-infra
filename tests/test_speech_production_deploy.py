@@ -46,6 +46,13 @@ class SpeechProductionDeployTests(unittest.TestCase):
         self.assertNotIn("'^HEALTH_INTERNAL_TOKEN=.+\\n", text)
         self.assertNotIn('down -v', text.split('for repository in "${REPOSITORIES[@]}"; do')[1])
 
+    def test_scheduled_backup_includes_speech_history_when_worker_service_runs(self):
+        backup = (PROD / "backup-production.sh").read_text(encoding="utf-8")
+        self.assertIn('SPEECH_ID="$(compose ps -q speech-service', backup)
+        self.assertIn('docker cp "${SPEECH_ID}:/data/."', backup)
+        self.assertIn('"${STAGING_DIR}/docker/speech-data/"', backup)
+        self.assertIn('speech_data', (PROD / "docker-compose.yml").read_text(encoding="utf-8"))
+
     @unittest.skipUnless(shutil.which("bash"), "Bash is unavailable")
     def test_syntax_and_help_are_safe_offline(self):
         for script in [TARGET, LEGACY]:
