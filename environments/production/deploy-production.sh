@@ -4,6 +4,7 @@
 # The script deliberately does not use `down -v`: PostgreSQL and other named
 # volumes are retained.
 set -Eeuo pipefail
+umask 077
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE_DIR="$(cd -- "$SCRIPT_DIR/../../.." && pwd)"
@@ -93,169 +94,39 @@ require_command docker
 
 # Starsze pliki .env nie zawieraja tokenu dodanego wraz z integracja Health-LLM.
 # Wygeneruj go raz; obie uslugi otrzymaja te sama wartosc.
-if ! grep -Eq '^HEALTH_INTERNAL_TOKEN=.+
-  update_repository "$repository"
-done
-
-for repository in "${OPTIONAL_REPOSITORIES[@]}"; do
-  if [[ -e "$repository/.git" ]]; then
-    update_repository "$repository"
-  else
-    echo "Pominieto opcjonalne repozytorium: $repository"
-  fi
-done
-
-echo "Walidacja konfiguracji Docker Compose"
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" config -q
-
-echo "Budowanie obrazow przed zmiana dzialajacych uslug"
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" build
-
-echo "Uruchomienie infrastruktury i uzupelnienie brakujacych baz"
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" up -d --wait postgres rabbitmq
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/05-init-shopping-database.sh
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/06-init-knowledge-database.sh
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/07-init-health-database.sh
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/08-init-budget-database.sh
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/09-init-media-database.sh
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/10-init-news-database.sh
-
-echo "Aktualizacja uslug bez usuwania wolumenow"
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" up -d --no-build
-
-echo "Aktualny stan kontenerow"
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" ps
- "$SCRIPT_DIR/.env"; then
+if ! grep -Eq '^HEALTH_INTERNAL_TOKEN=.+$' "$SCRIPT_DIR/.env"; then
   health_internal_token="$(od -An -N32 -tx1 /dev/urandom | tr -d '[:space:]')"
-  printf '\nHEALTH_INTERNAL_TOKEN=%s\n' "$health_internal_token" >> "$SCRIPT_DIR/.env"
+  if grep -Eq '^HEALTH_INTERNAL_TOKEN=' "$SCRIPT_DIR/.env"; then
+    sed -i "s/^HEALTH_INTERNAL_TOKEN=.*/HEALTH_INTERNAL_TOKEN=$health_internal_token/" "$SCRIPT_DIR/.env"
+  else
+    printf '\nHEALTH_INTERNAL_TOKEN=%s\n' "$health_internal_token" >> "$SCRIPT_DIR/.env"
+  fi
   chmod 600 "$SCRIPT_DIR/.env"
   echo "Wygenerowano brakujacy HEALTH_INTERNAL_TOKEN w produkcyjnym .env"
 fi
 
-# Speech is opt-in. Never clone/build an optional private repo until enabled.
+# Speech is opt-in: do not clone or build this private repository unless enabled.
 speech_enabled=0
 if [[ ",${COMPOSE_PROFILES:-}," == *,speech,* ]] ||
    grep -Eq '^COMPOSE_PROFILES=([^#]*,)?speech(,|[[:space:]]|$)' "$SCRIPT_DIR/.env"; then
   speech_enabled=1
-  if ! grep -Eq '^SPEECH_API_TOKEN=.+' "$SCRIPT_DIR/.env"; then
+  if ! grep -Eq '^SPEECH_API_TOKEN=.{32,}$' "$SCRIPT_DIR/.env"; then
+    if grep -Eq '^SPEECH_API_TOKEN=[^[:space:]]+' "$SCRIPT_DIR/.env"; then
+      echo "SPEECH_API_TOKEN istnieje, ale ma mniej niz 32 znaki. Przerywam." >&2
+      exit 1
+    fi
     speech_token="$(od -An -N32 -tx1 /dev/urandom | tr -d '[:space:]')"
-    if grep -Eq '^SPEECH_API_TOKEN=
-  if ! grep -Eq '^SPEECH_API_TOKEN=.{32,}
-  update_repository "$repository"
-done
-
-for repository in "${OPTIONAL_REPOSITORIES[@]}"; do
-  if [[ -e "$repository/.git" ]]; then
-    update_repository "$repository"
-  else
-    echo "Pominieto opcjonalne repozytorium: $repository"
-  fi
-done
-
-echo "Walidacja konfiguracji Docker Compose"
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" config -q
-
-echo "Budowanie obrazow przed zmiana dzialajacych uslug"
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" build
-
-echo "Uruchomienie infrastruktury i uzupelnienie brakujacych baz"
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" up -d --wait postgres rabbitmq
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/05-init-shopping-database.sh
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/06-init-knowledge-database.sh
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/07-init-health-database.sh
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/08-init-budget-database.sh
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/09-init-media-database.sh
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/10-init-news-database.sh
-
-echo "Aktualizacja uslug bez usuwania wolumenow"
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" up -d --no-build
-
-echo "Aktualny stan kontenerow"
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" ps
- "$SCRIPT_DIR/.env"; then
-    echo "SPEECH_API_TOKEN musi zawierac co najmniej 32 znaki." >&2
-    exit 1
-  fi
-  REPOSITORIES+=("$WORKSPACE_DIR/microservices/speech")
-fi
-for repository in "${REPOSITORIES[@]}"; do
-  update_repository "$repository"
-done
-
-for repository in "${OPTIONAL_REPOSITORIES[@]}"; do
-  if [[ -e "$repository/.git" ]]; then
-    update_repository "$repository"
-  else
-    echo "Pominieto opcjonalne repozytorium: $repository"
-  fi
-done
-
-echo "Walidacja konfiguracji Docker Compose"
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" config -q
-
-echo "Budowanie obrazow przed zmiana dzialajacych uslug"
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" build
-
-echo "Uruchomienie infrastruktury i uzupelnienie brakujacych baz"
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" up -d --wait postgres rabbitmq
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/05-init-shopping-database.sh
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/06-init-knowledge-database.sh
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/07-init-health-database.sh
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/08-init-budget-database.sh
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/09-init-media-database.sh
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/10-init-news-database.sh
-
-echo "Aktualizacja uslug bez usuwania wolumenow"
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" up -d --no-build
-
-echo "Aktualny stan kontenerow"
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" ps
- "$SCRIPT_DIR/.env"; then
+    if grep -Eq '^SPEECH_API_TOKEN=' "$SCRIPT_DIR/.env"; then
       sed -i "s/^SPEECH_API_TOKEN=$/SPEECH_API_TOKEN=$speech_token/" "$SCRIPT_DIR/.env"
     else
       printf '\nSPEECH_API_TOKEN=%s\n' "$speech_token" >> "$SCRIPT_DIR/.env"
     fi
     chmod 600 "$SCRIPT_DIR/.env"
-    echo "Wygenerowano SPEECH_API_TOKEN dla Alice Speech w produkcyjnym .env"
-  fi
-  if ! grep -Eq '^SPEECH_API_TOKEN=.{32,}
-  update_repository "$repository"
-done
-
-for repository in "${OPTIONAL_REPOSITORIES[@]}"; do
-  if [[ -e "$repository/.git" ]]; then
-    update_repository "$repository"
-  else
-    echo "Pominieto opcjonalne repozytorium: $repository"
-  fi
-done
-
-echo "Walidacja konfiguracji Docker Compose"
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" config -q
-
-echo "Budowanie obrazow przed zmiana dzialajacych uslug"
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" build
-
-echo "Uruchomienie infrastruktury i uzupelnienie brakujacych baz"
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" up -d --wait postgres rabbitmq
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/05-init-shopping-database.sh
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/06-init-knowledge-database.sh
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/07-init-health-database.sh
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/08-init-budget-database.sh
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/09-init-media-database.sh
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" exec -T postgres bash /docker-entrypoint-initdb.d/10-init-news-database.sh
-
-echo "Aktualizacja uslug bez usuwania wolumenow"
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" up -d --no-build
-
-echo "Aktualny stan kontenerow"
-docker compose --project-name "$COMPOSE_PROJECT_NAME" --env-file "$SCRIPT_DIR/.env" -f "$COMPOSE_FILE" ps
- "$SCRIPT_DIR/.env"; then
-    echo "SPEECH_API_TOKEN musi zawierac co najmniej 32 znaki." >&2
-    exit 1
+    echo "Wygenerowano SPEECH_API_TOKEN w produkcyjnym .env"
   fi
   REPOSITORIES+=("$WORKSPACE_DIR/microservices/speech")
 fi
+
 for repository in "${REPOSITORIES[@]}"; do
   update_repository "$repository"
 done
