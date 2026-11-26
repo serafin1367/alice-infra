@@ -97,3 +97,16 @@ infra-compose-speech:
           -f "$CI_PROJECT_DIR/environments/$target/docker-compose.yml" \
           config --services | grep -qx 'speech-service'
       done
+
+
+# Offline Linux runner checks: no GitHub/GitLab requests, no pushes, no CI publishing.
+infra-sync-shell:
+  stage: validate
+  tags: [alice-quality-docker]
+  script:
+    - 'command -v docker >/dev/null || { echo "Docker CLI unavailable"; exit 1; }'
+    - |
+      docker run --rm -v "$CI_PROJECT_DIR:/repo:ro" -w /repo python:3.12-alpine \
+        sh -ec 'apk add --no-cache bash git util-linux >/dev/null &&
+                bash -n scripts/sync.sh &&
+                python -m unittest discover -s tests -p "test_sync_shell.py" -v'
