@@ -200,6 +200,19 @@ else
   fail "Kontener smarthome-service nie działa"
 fi
 
+# Optional Alice Speech recordings. Include the persistent /data volume when
+# the Speech profile is enabled; do not restart the TTS service for backup.
+SPEECH_ID="$(compose ps -q speech-service 2>/dev/null || true)"
+if [[ -n "${SPEECH_ID}" ]]; then
+  log "Kopiowanie historii Alice Speech (MP3 + statusy)"
+  mkdir -p "${STAGING_DIR}/docker/speech-data"
+  docker cp "${SPEECH_ID}:/data/." "${STAGING_DIR}/docker/speech-data/"
+  [[ -d "${STAGING_DIR}/docker/speech-data/jobs" ]] ||
+    fail "Kopia speech_data nie zawiera katalogu jobs"
+else
+  log "Speech Service nie jest uruchomiony — pomijam opcjonalny backup Speech"
+fi
+
 RABBITMQ_ID="$(compose ps -q rabbitmq)"
 [[ -n "${RABBITMQ_ID}" ]] || fail "Kontener RabbitMQ nie działa"
 log "Eksport definicji RabbitMQ"
