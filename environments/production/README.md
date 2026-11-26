@@ -1,5 +1,82 @@
 # Production Stack
 
+## Alice Speech — produkcyjne wdrożenie zakresowe (2026-11-26)
+
+Wdrożenie generowania MP3, lektora Alice NEWS, historii i automatycznej
+retencji jest przygotowane w odrębnym skrypcie
+[`deploy-speech-production.sh`](deploy-speech-production.sh).
+**P8 (monitoring) nie został jeszcze wdrożony.**
+
+Nie używaj w tym celu pełnego `deploy-production.sh`, ponieważ
+aktualizuje on całą platformę. Dedykowana procedura aktualizuje
+**tylko** `speech-service` i `alice-web`; nie restartuje PostgreSQL,
+RabbitMQ ani mikroserwisu NEWS.
+
+Przed uruchomieniem:
+1. Uruchom synchronizację GitHub → GitLab dla
+   `alice-speech-service` i `alice-web`; sprawdź status ich CI.
+2. Na produkcji pobierz aktualny `main` repozytorium `alice-infra`.
+3. W `environments/production/.env` ustaw
+   `COMPOSE_PROFILES=speech`, silny `SPEECH_API_TOKEN` (co najmniej
+   32 znaki), `ALICE_WEB_SPEECH_UPSTREAM=http://speech-service:8098`.
+   Wartości `SPEECH_RETENTION_MAX_JOBS=100`,
+   `SPEECH_RETENTION_MAX_DAYS=14`,
+   `SPEECH_RETENTION_MAX_AUDIO_MB=512` oraz
+   `SPEECH_RETENTION_CLEANUP_MINUTES=60` są domyślne.
+   Ustaw `SPEECH_RETENTION_ENABLED=false`, jeżeli na pierwszym
+   wdrożeniu nie chcesz automatycznie usuwać starych nagrań.
+4. Zweryfikuj połączenie FormsSpeech na Windows z **produkcyjnym**
+   RabbitMQ: adres, port, użytkownik, vhost i hasło. Nie zakładaj,
+   że dotychczasowy worker DEV automatycznie łączy się z PROD.
+   Dostęp AMQP ogranicz VPN/firewallem; domyślne mapowanie portu
+   RabbitMQ w Compose nie zapewnia TLS.
+5. Upewnij się, że `COMPOSE_PROJECT_NAME` odpowiada nazwie
+   faktycznego, działającego projektu Docker Compose (domyślnie
+   `production`). W przeciwnym razie skrypt powinien zatrzymać
+   się na kontroli istniejącego RabbitMQ.
+
+Z katalogu `infra/environments/production`:
+
+```bash
+chmod +x deploy-speech-production.sh
+./deploy-speech-production.sh --check
+./deploy-speech-production.sh --deploy
+```
+
+Skrypt:
+- przerywa na nieprawidłowej konfiguracji/sekrecie lub braku RabbitMQ;
+- pobiera kod dwóch usług z GitLab (tylko fast-forward, bez PR);
+- **przed restartem** wykonuje backup istniejącego woluminu
+  `<compose-project>_speech_data` do
+  `/var/backups/alice/speech`; wymaga działającego Dockera i obrazu
+  `alpine:3.21`, a w razie nieudanego backupu kończy wdrożenie;
+- buduje tylko obrazy dwóch usług i uruchamia je bez zależności
+  (`--no-deps`) z kontrolą healthcheck;
+- sprawdza przez Nginx endpoint historii i retencji;
+- nie usuwa woluminów, nie wdraża innych mikroserwisów i nie
+  przeprowadza automatycznego rollbacku.
+
+Oprócz kopii przedwdrożeniowej produkcyjny `backup-production.sh`
+obejmuje teraz katalog `docker/speech-data` z MP3 i statusami, gdy
+kontener Speech Service jest dostępny. Dane audio są prywatne —
+zabezpiecz katalogi backupów i okresowo testuj odtwarzanie.
+
+Po wdrożeniu:
+```bash
+docker compose --profile speech --env-file .env ps speech-service alice-web rabbitmq
+docker compose --profile speech --env-file .env logs --tail=80 speech-service
+curl -fsS http://127.0.0.1:${ALICE_WEB_PUBLIC_PORT:-8080}/api/speech/tts/history?limit=1
+curl -fsS http://127.0.0.1:${ALICE_WEB_PUBLIC_PORT:-8080}/api/speech/tts/workers
+```
+
+**Kryterium zakończenia:** RabbitMQ connected, worker `ready: true`,
+generowanie MP3 głosem SAPI, odsłuch artykułu NEWS, ponowny odsłuch
+bez zbędnej syntezy oraz widoczna polityka retencji.
+Nie można potwierdzić tych warunków bez uruchomienia usług na PROD.
+
+---
+
+
 ## Alice Speech — TTS przez RabbitMQ (2026-11-23)
 
 W profilach Docker Compose dostępna jest opcjonalna usługa `speech-service`
