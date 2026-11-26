@@ -22,6 +22,14 @@ class SyncShellTests(unittest.TestCase):
         speech = next(x for x in cfg["projects"] if x["github"] == "alice-speech-service")
         self.assertEqual(speech["gitlab"], "alice/microservices/speech")
 
+    def test_node_manager_mirror_uses_actual_github_repository(self):
+        cfg = json.loads(CONFIG.read_text(encoding="utf-8"))
+        node = [p for p in cfg["projects"]
+                if p["gitlab"] == "alice/microservices/node-manager"]
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0]["github"], "alice-microservices-node-manager")
+        self.assertNotIn("alice-node-manager", [p["github"] for p in cfg["projects"]])
+
     def test_runner_keeps_fast_forward_ssh_backend_and_lock(self):
         script = SCRIPT.read_text(encoding="utf-8")
         self.assertTrue(script.startswith("#!/usr/bin/env bash\n"))
