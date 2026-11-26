@@ -109,4 +109,7 @@ infra-sync-shell:
       docker run --rm -v "$CI_PROJECT_DIR:/repo:ro" -w /repo python:3.12-alpine \
         sh -ec 'apk add --no-cache bash git util-linux >/dev/null &&
                 bash -n scripts/sync.sh &&
-                python -m unittest discover -s tests -p "test_sync_shell.py" -v'
+                bash -n environments/production/deploy-production.sh &&
+                bash -n environments/production/deploy-speech-production.sh &&
+                python -m unittest discover -s tests -p "test_sync_shell.py" -v &&
+                python -m unittest discover -s tests -p "test_speech_production_deploy.py" -v'
