@@ -13,7 +13,7 @@
       "gitlab": "alice/Node"
     },
     {
-      "github": "alice-node-manager",
+      "github": "alice-microservices-node-manager",
       "gitlab": "alice/microservices/node-manager"
     },
     {
