@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Targeted, reversible-by-image rollout for Alice Speech and Alice Web.
+# Targeted, backup-first rollout for Alice Speech and Alice Web.
 # Does not deploy/stop/rebuild Postgres, RabbitMQ, NEWS or other microservices.
 set -Eeuo pipefail
 umask 077
@@ -14,8 +14,8 @@ BACKUP_DIR="${ALICE_SPEECH_BACKUP_DIR:-/var/backups/alice/speech}"
 MODE=check
 SPEECH_REPO="$WORKSPACE_DIR/microservices/speech"
 WEB_REPO="$WORKSPACE_DIR/alice-web"
-SPEECH_URL="${ALICE_SPEECH_GIT_URL:-http://gitlab.mbb.net.pl/alice/microservices/speech.git}"
-WEB_URL="${ALICE_WEB_GIT_URL:-http://gitlab.mbb.net.pl/alice/alice-web.git}"
+SPEECH_URL="${ALICE_SPEECH_GIT_URL:-https://gitlab.mbb.net.pl/alice/microservices/speech.git}"
+WEB_URL="${ALICE_WEB_GIT_URL:-https://gitlab.mbb.net.pl/alice/alice-web.git}"
 
 usage() {
   cat <<'HELP'
