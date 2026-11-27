@@ -114,3 +114,11 @@ infra-sync-shell:
                 bash -n environments/production/backup-production.sh &&
                 python -m unittest discover -s tests -p "test_sync_shell.py" -v &&
                 python -m unittest discover -s tests -p "test_speech_production_deploy.py" -v'
+
+# Isolated diagnostics failure simulations; no production endpoints or credentials.
+infra-diagnostics-failures:
+  stage: validate
+  tags: [alice-quality-docker]
+  script:
+    - 'command -v docker >/dev/null || { echo "Docker CLI unavailable"; exit 1; }'
+    - docker run --rm -v "$CI_PROJECT_DIR:/repo:ro" -w /repo node:22-alpine node --test tests/diagnostics-failures.test.cjs
