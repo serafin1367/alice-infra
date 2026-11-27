@@ -22,6 +22,7 @@ services:
       SMARTHOME_UPSTREAM: ${ALICE_WEB_SMARTHOME_UPSTREAM:-http://smarthome-service:8091}
       MEDIA_UPSTREAM: ${ALICE_WEB_MEDIA_UPSTREAM:-http://media-service:8096}
       NODES_UPSTREAM: ${ALICE_WEB_NODES_UPSTREAM:-http://node-manager-service:8097}
+      DIAGNOSTICS_UPSTREAM: http://diagnostics-service:8099
     ports:
       - "${ALICE_WEB_BIND_IP:-127.0.0.1}:${ALICE_WEB_PUBLIC_PORT:-8080}:80"
     healthcheck:
